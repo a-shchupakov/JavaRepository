@@ -14,11 +14,6 @@ public class Serializer implements ISerializer {
 
     @Override
     public Object deserialize(byte[] data) {
-        data = Archiver.dearchive(data);
-        if (data == null) {
-            System.out.println("Cannot unzip bytes");
-            return null;
-        }
         Properties properties = new Properties();
         InputStream inputStream = new ByteArrayInputStream(data);
         try {
@@ -47,6 +42,6 @@ public class Serializer implements ISerializer {
         try {
             byteArrayOutputStream.close();
         } catch (IOException e) { }
-        return Archiver.archive(byteObject, "");
+        return byteObject;
     }
 }

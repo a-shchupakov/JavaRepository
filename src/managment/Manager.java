@@ -40,7 +40,7 @@ public class Manager {
     public void getFromAnotherManager(){
         byte[] serializedData = dataTransporter.get();
         ICommandPacket packet = (ICommandPacket) serializer.deserialize(serializedData);
-        ICommand command = factory.create_command(packet);
+        ICommand command = factory.createCommand(packet);
         sendToProcessor(command);
     }
 

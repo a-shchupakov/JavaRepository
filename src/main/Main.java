@@ -1,7 +1,6 @@
 package main;
 
 import commands.CommandFactory;
-import commands.ICommand;
 import commands.ICommandPacket;
 import managment.Manager;
 import utils.encrypt.IEncryptor;
@@ -11,18 +10,7 @@ import utils.encrypt.XorEncryptor;
 public class Main {
 
     public static void main(String[] args) {
-        CommandFactory factory = new CommandFactory() {
-            @Override
-            public ICommand create_command(ICommandPacket packet) {
-                return new ICommand() {
-                    @Override
-                    public void execute() {
-                        SimpleCommandPacket commandPacket = (SimpleCommandPacket) packet;
-                        System.out.println("Command executed which was sent by user " + commandPacket.id);
-                    }
-                };
-            }
-        };
+        CommandFactory factory = new CommandFactory();
 
         IEncryptor encryptor = new XorEncryptor("same super secret phrase".getBytes());
 
