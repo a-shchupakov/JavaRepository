@@ -1,4 +1,4 @@
-package utils;
+package utils.serializers;
 
 public interface ISerializer {
     Object deserialize(byte[] data);

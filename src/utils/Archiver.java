@@ -17,7 +17,7 @@ public class Archiver {
         try {
             ZipEntry entry;
             while ((entry = stream.getNextEntry()) != null) { // TODO: multiple entries
-                // Once we get the entry from the stream, the stream is
+                // Once we getRaw the entry from the stream, the stream is
                 // positioned read to read the raw data, and we keep
                 // reading until read returns 0 or less.
                 ByteArrayOutputStream output = null;

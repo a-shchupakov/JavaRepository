@@ -4,9 +4,9 @@ import commands.CommandFactory;
 import commands.ICommand;
 import commands.ICommandPacket;
 import managment.Manager;
-import utils.IEncryptor;
-import utils.Serializer;
-import utils.XorEncryptor;
+import utils.encrypt.IEncryptor;
+import utils.serializers.Serializer;
+import utils.encrypt.XorEncryptor;
 
 public class Main {
 
@@ -26,8 +26,8 @@ public class Main {
 
         IEncryptor encryptor = new XorEncryptor("same super secret phrase".getBytes());
 
-        StraightDataTransporter transporter1 = new StraightDataTransporter(encryptor);
-        StraightDataTransporter transporter2 = new StraightDataTransporter(encryptor);
+        StraightEncryptingDataTransporter transporter1 = new StraightEncryptingDataTransporter(encryptor);
+        StraightEncryptingDataTransporter transporter2 = new StraightEncryptingDataTransporter(encryptor);
         transporter1.setAnotherTransporter(transporter2);
         transporter2.setAnotherTransporter(transporter1);
 

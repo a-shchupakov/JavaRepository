@@ -1,4 +1,4 @@
-package utils;
+package utils.encrypt;
 
 public class XorEncryptor implements IEncryptor {
     private final byte[] secret;
