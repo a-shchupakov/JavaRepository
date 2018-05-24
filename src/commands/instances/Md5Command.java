@@ -13,4 +13,8 @@ public class Md5Command implements ICommand {
     public void execute() {
 
     }
+
+    public byte[] getMd5Bytes() {
+        return md5Bytes;
+    }
 }

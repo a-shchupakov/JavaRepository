@@ -42,9 +42,9 @@ public class CommandFactory {
         try {
             innerCommand = (DataCommand) createCommand(responsePacket.packet);
         }
-        catch () {
-            //empty inner command;
-        }//cast exception
+        catch (ClassCastException e) {
+            innerCommand = EmptyDataCommand.INSTANCE;
+        }
 
         return new ResponseCommand(responsePacket.error, responsePacket.errorInfo, innerCommand);
     }

@@ -5,6 +5,7 @@ import commands.ICommand;
 import commands.ICommandPacket;
 import commands.ICommandProcessor;
 import utils.data.IDataTransporter;
+import utils.data.TransporterException;
 import utils.serializers.ISerializer;
 
 public class Manager {
@@ -32,19 +33,19 @@ public class Manager {
         return commandProcessor;
     }
 
-    private void sendToAnotherManager(ICommandPacket packet){
+    private void sendToAnotherManager(ICommandPacket packet) throws TransporterException {
         byte[] serializedData = serializer.serialize(packet);
         dataTransporter.send(serializedData);
     }
 
-    public void getFromAnotherManager(){
+    public void getFromAnotherManager() throws TransporterException{
         byte[] serializedData = dataTransporter.get();
         ICommandPacket packet = (ICommandPacket) serializer.deserialize(serializedData);
         ICommand command = factory.createCommand(packet);
         sendToProcessor(command);
     }
 
-    public void sendToAnotherProcessor(ICommandPacket packet){
+    public void sendToAnotherProcessor(ICommandPacket packet) throws TransporterException {
         sendToAnotherManager(packet);
     }
 

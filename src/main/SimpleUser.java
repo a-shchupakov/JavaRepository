@@ -8,14 +8,14 @@ import managment.Manager;
 
 public class SimpleUser implements ICommandProcessor {
     private final Manager manager;
-    private final int id;
+    private final String id;
 
     private SimpleUser() {
         manager = null;
-        id = 0;
+        id = "";
     }
 
-    public SimpleUser(int id, Manager manager){
+    public SimpleUser(String id, Manager manager){
         this.id = id;
         this.manager = manager;
     }
@@ -23,7 +23,7 @@ public class SimpleUser implements ICommandProcessor {
     @Override
     public ICommandPacket process(ICommand command) {
         ICommandPacket response = null;
-        System.out.println("Executing command on user " + id);
+        System.out.println("Executing command on user with id: " + id);
         if (command instanceof InfoCommand) {
             InfoCommand infoCommand = (InfoCommand) command;
             infoCommand.setStream(System.out);
@@ -31,7 +31,7 @@ public class SimpleUser implements ICommandProcessor {
         else if (command instanceof Md5Command)
         {
             Md5Command md5Command = (Md5Command) command;
-            for(byte b: md5Command.md5Bytes)
+            for(byte b: md5Command.getMd5Bytes())
                 System.out.print(b);
             System.out.println();
         }
@@ -44,6 +44,6 @@ public class SimpleUser implements ICommandProcessor {
 
     @Override
     public ICommandPacket createPacket() {
-        return new InfoPacket("Hello from user " + id);
+        return new InfoPacket("Hello from user with id: " + id);
     }
 }
