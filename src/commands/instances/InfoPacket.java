@@ -2,14 +2,14 @@ package commands.instances;
 
 import commands.ICommandPacket;
 
-public class InfoCommandPacket implements ICommandPacket {
+public class InfoPacket implements ICommandPacket {
     public final String info;
 
-    private InfoCommandPacket(){
+    private InfoPacket(){
         this.info = null;
     }
 
-    public InfoCommandPacket(String info){
+    public InfoPacket(String info){
         this.info = info;
     }
 }

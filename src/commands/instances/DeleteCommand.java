@@ -1,25 +1,20 @@
 package commands.instances;
 
-import commands.ICommand;
-import utils.data.IDataProvider;
 import utils.data.EmptyDataProvider;
 
-public class DeleteCommand implements ICommand {
-    private IDataProvider dataProvider;
+public class DeleteCommand extends DataCommand {
     private final String toDelete;
 
     public DeleteCommand(String name){
         this.toDelete = name;
     }
 
-    public void setDataProvider(IDataProvider dataProvider) {
-        this.dataProvider = dataProvider;
-    }
-
     @Override
     public void execute() {
+        if (path == null)
+            path = "";
         if (dataProvider == null)
             dataProvider = EmptyDataProvider.INSTANCE;
-        dataProvider.delete(toDelete);
+        dataProvider.delete(dataProvider.resolvePath(path, toDelete));
     }
 }

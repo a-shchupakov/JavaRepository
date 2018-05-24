@@ -3,9 +3,7 @@ package main;
 import commands.ICommand;
 import commands.ICommandPacket;
 import commands.ICommandProcessor;
-import commands.instances.EmptyCommandPacket;
-import commands.instances.InfoCommand;
-import commands.instances.InfoCommandPacket;
+import commands.instances.*;
 import managment.Manager;
 
 public class SimpleUser implements ICommandProcessor {
@@ -30,15 +28,22 @@ public class SimpleUser implements ICommandProcessor {
             InfoCommand infoCommand = (InfoCommand) command;
             infoCommand.setStream(System.out);
         }
+        else if (command instanceof Md5Command)
+        {
+            Md5Command md5Command = (Md5Command) command;
+            for(byte b: md5Command.md5Bytes)
+                System.out.print(b);
+            System.out.println();
+        }
         command.execute();
 
         if (response == null)
-            response = EmptyCommandPacket.INSTANCE;
+            response = EmptyPacket.INSTANCE;
         return response;
     }
 
     @Override
     public ICommandPacket createPacket() {
-        return new InfoCommandPacket("Hello from user " + id);
+        return new InfoPacket("Hello from user " + id);
     }
 }

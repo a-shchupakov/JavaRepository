@@ -2,13 +2,13 @@ package commands.instances;
 
 import commands.ICommandPacket;
 
-public class DeleteCommandPacket implements ICommandPacket {
+public class DeletePacket implements ICommandPacket {
     public final String toDelete;
-    private DeleteCommandPacket(){
+    private DeletePacket(){
         this.toDelete = null;
     }
 
-    public DeleteCommandPacket(String name){
+    public DeletePacket(String name){
         this.toDelete = name;
     }
 }
