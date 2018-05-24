@@ -1,8 +1,9 @@
 package utils.data;
 
+import java.io.IOException;
+
 public interface IDataProvider {
-    byte[] read(String name);
-    void write(String name, byte[] bytes);
-    void delete(String name);
-    String resolvePath(String main, String other);
+    byte[] read(String name) throws IOException;
+    void write(String name, byte[] bytes) throws IOException;
+    void delete(String name) throws IOException;
 }

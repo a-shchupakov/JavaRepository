@@ -22,7 +22,6 @@ public class ResponseCommand extends DataCommand {
     @Override
     public void execute() {
         innerCommand.setDataProvider(this.dataProvider);
-        innerCommand.setPath(this.path);
         innerCommand.execute();
     }
 }

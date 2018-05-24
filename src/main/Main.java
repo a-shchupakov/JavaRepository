@@ -24,8 +24,12 @@ public class Main {
 
             IEncryptor encryptor = new XorEncryptor("same super secret phrase".getBytes());
 
+            String root1 = "D:\\IT\\ООП\\практика\\Репозиторий\\tests\\junk_to_del1";
+            String root2 = "D:\\IT\\ООП\\практика\\Репозиторий\\tests\\junk_to_del2";
+
             //StraightEncryptingDataTransporter transporter1 = new StraightEncryptingDataTransporter(encryptor);
             //StraightEncryptingDataTransporter transporter2 = new StraightEncryptingDataTransporter(encryptor);
+
 
             InetAddress ipAddress = InetAddress.getByName("127.0.0.1");
             int port = 12345;
@@ -34,24 +38,22 @@ public class Main {
             Socket clientSocket = new Socket(ipAddress, port);
             Socket client = server.accept();
 
-
-
             NetDataTransporter transporter1 = new NetDataTransporter(encryptor, clientSocket.getInputStream(), clientSocket.getOutputStream());
             NetDataTransporter transporter2 = new NetDataTransporter(encryptor, client.getInputStream(), client.getOutputStream());
 
             Manager manager1 = new Manager(new Serializer(), transporter1, factory);
-            SimpleUser user1 = new SimpleUser("client", manager1);
+            SimpleUser user1 = new SimpleUser(root1, "client", manager1);
             manager1.setCommandProcessor(user1);
 
             Manager manager2 = new Manager(new Serializer(), transporter2, factory);
-            SimpleUser user2 = new SimpleUser("server", manager2);
+            SimpleUser user2 = new SimpleUser(root2, "server", manager2);
             manager2.setCommandProcessor(user2);
 
             System.out.println("Finished constructing");
-            manager1.sendToAnotherProcessor(user1.createPacket());
+            manager1.sendToAnotherProcessor(user1.createWritePacket("text.txt"));
             manager2.getFromAnotherManager();
 
-            manager2.sendToAnotherProcessor(user2.createPacket());
+            manager2.sendToAnotherProcessor(user2.createDeletePacket("text.txt"));
             manager1.getFromAnotherManager();
 
         }

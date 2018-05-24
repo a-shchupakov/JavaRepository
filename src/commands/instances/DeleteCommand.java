@@ -2,6 +2,8 @@ package commands.instances;
 
 import utils.data.EmptyDataProvider;
 
+import java.io.IOException;
+
 public class DeleteCommand extends DataCommand {
     private final String toDelete;
 
@@ -11,10 +13,13 @@ public class DeleteCommand extends DataCommand {
 
     @Override
     public void execute() {
-        if (path == null)
-            path = "";
         if (dataProvider == null)
             dataProvider = EmptyDataProvider.INSTANCE;
-        dataProvider.delete(dataProvider.resolvePath(path, toDelete));
+
+        try {
+            dataProvider.delete(toDelete);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

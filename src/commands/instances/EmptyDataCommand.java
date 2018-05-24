@@ -7,7 +7,6 @@ public class EmptyDataCommand extends DataCommand {
 
     private EmptyDataCommand(){
         dataProvider = EmptyDataProvider.INSTANCE;
-        path = "";
     }
 
     @Override

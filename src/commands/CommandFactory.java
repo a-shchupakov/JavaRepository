@@ -15,6 +15,8 @@ public class CommandFactory {
             command = createMd5Command(packet);
         else if (packet instanceof ResponsePacket)
             command = createResponseCommamd(packet);
+        else if (packet instanceof WritePacket)
+            command = createWriteCommand(packet);
         if (command == null)
             command = EmptyCommand.INSTANCE;
         return command;
@@ -47,5 +49,10 @@ public class CommandFactory {
         }
 
         return new ResponseCommand(responsePacket.error, responsePacket.errorInfo, innerCommand);
+    }
+
+    private WriteCommand createWriteCommand(ICommandPacket packet){
+        WritePacket writePacket = (WritePacket) packet;
+        return new WriteCommand(writePacket.names, writePacket.bytes);
     }
 }

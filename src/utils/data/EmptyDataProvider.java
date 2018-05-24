@@ -17,9 +17,4 @@ public class EmptyDataProvider implements IDataProvider {
     public void delete(String name) {
 
     }
-
-    @Override
-    public String resolvePath(String main, String other) {
-        return "";
-    }
 }

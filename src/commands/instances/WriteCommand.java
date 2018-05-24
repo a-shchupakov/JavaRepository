@@ -2,6 +2,8 @@ package commands.instances;
 
 import utils.data.EmptyDataProvider;
 
+import java.io.IOException;
+
 public class WriteCommand extends DataCommand {
     private String[] names;
     private byte[][] bytes;
@@ -13,12 +15,14 @@ public class WriteCommand extends DataCommand {
 
     @Override
     public void execute() {
-        if (path == null)
-            path = "";
         if (dataProvider == null)
             dataProvider = EmptyDataProvider.INSTANCE;
         for (int i = 0; i < bytes.length; i++){
-            dataProvider.write(dataProvider.resolvePath(path, names[i]), bytes[i]);
+            try {
+                dataProvider.write(names[i], bytes[i]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
