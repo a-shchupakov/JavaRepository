@@ -5,10 +5,10 @@ import utils.data.EmptyDataProvider;
 import java.io.IOException;
 
 public class DeleteCommand extends DataCommand {
-    private final String toDelete;
+    private final String[] toDelete;
 
-    public DeleteCommand(String name){
-        this.toDelete = name;
+    public DeleteCommand(String[] names){
+        toDelete = names;
     }
 
     @Override
@@ -16,10 +16,12 @@ public class DeleteCommand extends DataCommand {
         if (dataProvider == null)
             dataProvider = EmptyDataProvider.INSTANCE;
 
-        try {
-            dataProvider.delete(toDelete);
-        } catch (IOException e) {
-            e.printStackTrace();
+        for (String name: toDelete) {
+            try {
+                dataProvider.delete(name);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

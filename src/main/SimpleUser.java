@@ -53,18 +53,22 @@ public class SimpleUser implements ICommandProcessor {
         return new InfoPacket("Hello from user with id: " + id);
     }
 
-    public ICommandPacket createWritePacket(String name){
-        byte[] bytes;
-        try {
-            bytes = dataProvider.read(name);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return EmptyPacket.INSTANCE;
+    public ICommandPacket createWritePacket(String ... names){
+        byte[][] filesContent = new byte[names.length][];
+        for (int i = 0; i < names.length; i++) {
+            byte[] data;
+            try {
+                data = dataProvider.read(names[i]);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return EmptyPacket.INSTANCE;
+            }
+            filesContent[i] = data;
         }
-        return new WritePacket(new String[] {name}, new byte[][] {bytes});
+        return new WritePacket(names, filesContent);
     }
 
-    public ICommandPacket createDeletePacket(String name){
-        return new DeletePacket(name);
+    public ICommandPacket createDeletePacket(String ... names){
+        return new DeletePacket(names);
     }
 }
