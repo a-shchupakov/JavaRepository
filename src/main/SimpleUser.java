@@ -56,7 +56,7 @@ public class SimpleUser implements ICommandProcessor {
     }
 
     @Override
-    public ICommandPacket createPacket() {
+    public ICommandPacket createPacket(String identifier) {
         return new InfoPacket("Hello from user with id: " + id);
     }
 
