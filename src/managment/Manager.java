@@ -38,18 +38,19 @@ public class Manager {
         dataTransporter.send(serializedData);
     }
 
-    public void getFromAnotherManager() throws TransporterException{
+    public ICommandPacket getFromAnotherManager() throws TransporterException{
         byte[] serializedData = dataTransporter.get();
         ICommandPacket packet = (ICommandPacket) serializer.deserialize(serializedData);
         ICommand command = factory.createCommand(packet);
-        sendToProcessor(command);
+        ICommandPacket response = sendToProcessor(command);
+        return response;
     }
 
     public void sendToAnotherProcessor(ICommandPacket packet) throws TransporterException {
         sendToAnotherManager(packet);
     }
 
-    private void sendToProcessor(ICommand command){
-        commandProcessor.process(command);
+    private ICommandPacket sendToProcessor(ICommand command){
+        return commandProcessor.process(command);
     }
 }

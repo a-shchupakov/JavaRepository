@@ -50,11 +50,11 @@ public class Main {
             manager2.setCommandProcessor(user2);
 
             System.out.println("Finished constructing");
-            manager1.sendToAnotherProcessor(user1.createWritePacket("text.txt", "1.txt", "35.txt"));
-            manager2.getFromAnotherManager();
+            user1.send(user1.createWritePacket("text.txt", "1.txt", "35.txt"));
+            user2.get();
 
-//            manager2.sendToAnotherProcessor(user2.createDeletePacket("text.txt"));
-//            manager1.getFromAnotherManager();
+            user2.send(user2.createDeletePacket("text.txt"));
+            user1.get();
 
         }
 

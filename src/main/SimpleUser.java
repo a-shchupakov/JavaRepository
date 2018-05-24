@@ -7,6 +7,7 @@ import commands.instances.*;
 import managment.Manager;
 import utils.data.FolderProvider;
 import utils.data.IDataProvider;
+import utils.data.TransporterException;
 
 import java.io.IOException;
 
@@ -51,6 +52,16 @@ public class SimpleUser implements ICommandProcessor {
     @Override
     public ICommandPacket createPacket() {
         return new InfoPacket("Hello from user with id: " + id);
+    }
+
+    @Override
+    public void send(ICommandPacket packet) throws TransporterException {
+        manager.sendToAnotherProcessor(packet);
+    }
+
+    @Override
+    public ICommandPacket get() throws TransporterException {
+        return manager.getFromAnotherManager();
     }
 
     public ICommandPacket createWritePacket(String ... names){
