@@ -1,4 +1,4 @@
-package commands;
+package perfomance;
 
 public interface ICommand {
     void execute();

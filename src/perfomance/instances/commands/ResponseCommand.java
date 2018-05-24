@@ -1,4 +1,4 @@
-package commands.instances;
+package perfomance.instances.commands;
 
 public class ResponseCommand extends DataCommand {
     private final int error;

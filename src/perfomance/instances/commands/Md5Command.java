@@ -1,6 +1,6 @@
-package commands.instances;
+package perfomance.instances.commands;
 
-import commands.ICommand;
+import perfomance.ICommand;
 
 public class Md5Command implements ICommand {
     private final byte[] md5Bytes;

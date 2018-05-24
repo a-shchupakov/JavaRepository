@@ -1,9 +1,9 @@
 package managment;
 
-import commands.CommandFactory;
-import commands.ICommand;
-import commands.ICommandPacket;
-import commands.ICommandProcessor;
+import perfomance.CommandFactory;
+import perfomance.ICommand;
+import perfomance.ICommandPacket;
+import perfomance.ICommandProcessor;
 import utils.data.IDataTransporter;
 import utils.data.TransporterException;
 import utils.serializers.ISerializer;

@@ -1,6 +1,6 @@
-package commands.instances;
+package perfomance.instances.packets;
 
-import commands.ICommandPacket;
+import perfomance.ICommandPacket;
 
 public class ResponsePacket implements ICommandPacket {
     public final int error;

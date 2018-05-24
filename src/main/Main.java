@@ -1,17 +1,12 @@
 package main;
 
-import commands.CommandFactory;
-import commands.ICommandPacket;
+import perfomance.CommandFactory;
 import managment.Manager;
 import utils.data.NetDataTransporter;
 import utils.encrypt.IEncryptor;
 import utils.serializers.Serializer;
 import utils.encrypt.XorEncryptor;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;

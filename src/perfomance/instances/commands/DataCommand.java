@@ -1,6 +1,6 @@
-package commands.instances;
+package perfomance.instances.commands;
 
-import commands.ICommand;
+import perfomance.ICommand;
 import utils.data.IDataProvider;
 
 public abstract class DataCommand implements ICommand {

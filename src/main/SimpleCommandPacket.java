@@ -1,6 +1,6 @@
 package main;
 
-import commands.ICommandPacket;
+import perfomance.ICommandPacket;
 
 public class SimpleCommandPacket implements ICommandPacket {
     public int id;

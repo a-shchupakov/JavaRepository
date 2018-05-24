@@ -1,9 +1,15 @@
 package main;
 
-import commands.ICommand;
-import commands.ICommandPacket;
-import commands.ICommandProcessor;
-import commands.instances.*;
+import perfomance.ICommand;
+import perfomance.ICommandPacket;
+import perfomance.ICommandProcessor;
+import perfomance.instances.commands.DataCommand;
+import perfomance.instances.commands.InfoCommand;
+import perfomance.instances.commands.Md5Command;
+import perfomance.instances.packets.DeletePacket;
+import perfomance.instances.packets.EmptyPacket;
+import perfomance.instances.packets.InfoPacket;
+import perfomance.instances.packets.WritePacket;
 import managment.Manager;
 import utils.data.FolderProvider;
 import utils.data.IDataProvider;

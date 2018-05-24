@@ -1,6 +1,7 @@
-package commands;
+package perfomance;
 
-import commands.instances.*;
+import perfomance.instances.commands.*;
+import perfomance.instances.packets.*;
 
 public class CommandFactory {
     public ICommand createCommand(ICommandPacket packet){
