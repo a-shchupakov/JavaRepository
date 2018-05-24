@@ -53,6 +53,7 @@ public class VersionControl extends WebServer {
                 OutputStream os = null;
                 try
                 {
+                    // тут надо взять еще System.in и из него читать комманды
                     is = m_socket.getInputStream();
                     os = m_socket.getOutputStream();
                 }

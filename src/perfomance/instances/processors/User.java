@@ -12,6 +12,7 @@ import utils.data.TransporterException;
 
 import java.io.IOException;
 
+@SuppressWarnings("Duplicates")
 public class User implements ICommandProcessor {
     private final Manager manager;
     private IDataProvider dataProvider;
