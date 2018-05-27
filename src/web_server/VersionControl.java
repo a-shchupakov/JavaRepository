@@ -1,74 +1,48 @@
 package web_server;
 
-import thread_dispatcher.ThreadDispatcher;
-import thread_dispatcher.ThreadedTask;
-import java.io.*;
-import java.net.Socket;
+import utils.data.IDataProvider;
 
-public class VersionControl extends WebServer {
-    private ThreadDispatcher threadDispatcher;
+import java.util.HashMap;
+import java.util.Map;
 
-    public VersionControl(int port){
-        super(port);
-        threadDispatcher = ThreadDispatcher.getInstance();
+public class VersionControl {
+    private final String repoDirectory;
+    private final IDataProvider dataProvider;
+    private Map<String, String> repositories;
+    private Map<String, String> repoLastVersion;
+
+    public VersionControl(IDataProvider dataProvider, String repoDirectory){
+        this.repoDirectory = repoDirectory;
+        this.dataProvider = dataProvider;
+        dataProvider.setCurrentRoot(repoDirectory);
+        repositories = new HashMap<>();
+        repoLastVersion = new HashMap<>();
     }
 
-    @Override
-    protected void handleClient(Socket client) {
-        ClientServant servant = new ClientServant(client);
-        threadDispatcher.add(new ThreadedTask() {
-            @Override
-            public void run() {
-                servant.run();
-            }
-        });
+    public String getRepoDirectory() {
+        return repoDirectory;
     }
 
-    public static void closeStream(Closeable stream) {
-        if (stream != null)
-        {
-            try
-            {
-                stream.close();
-            }
-            catch(IOException ex)
-            {
-                ex.printStackTrace();
-            }
-        }
+    public void createRepo(String name){
+        repositories.put(name, dataProvider.resolve(repoDirectory, name));
+        repoLastVersion.put(name, "");
+        dataProvider.createDirectory(name);
     }
 
-    static class ClientServant implements Runnable {
-        private Socket m_socket;
-
-        public ClientServant(Socket socket) {
-            m_socket = socket;
-        }
-
-        public void run()
-        {
-            try
-            {
-                InputStream is = null;
-                OutputStream os = null;
-                try
-                {
-                    // тут надо взять еще System.in и из него читать комманды
-                    is = m_socket.getInputStream();
-                    os = m_socket.getOutputStream();
-                }
-                finally
-                {
-                    closeStream(os);
-                    closeStream(is);
-                    m_socket.close();
-                }
-            }
-            catch (Exception ex)
-            {
-                System.err.println("client terminated with error: {1}" + ex);
-            }
-        }
+    public void updateLastVersion(String repoName, String version){
+        repoLastVersion.put(repoName, version);
     }
+
+    public String getLastVersion(String repoName){
+        return repoLastVersion.get(repoName);
+    }
+
+    public String getPathToRepo(String repoName){
+        return repositories.get(repoName);
+    }
+
+    public String resolve(String root, String name){
+        return dataProvider.resolve(root, name);
+    }
+
 }
-

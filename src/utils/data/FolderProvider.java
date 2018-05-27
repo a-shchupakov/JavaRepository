@@ -1,26 +1,42 @@
 package utils.data;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+
+import static java.nio.file.FileVisitResult.CONTINUE;
+import static java.nio.file.FileVisitResult.TERMINATE;
 
 public class FolderProvider implements IDataProvider {
-    private String root;
+    private String origin;
+    private String currentRoot;
     private Path path;
 
-    public FolderProvider(String root){
-        this.root = root;
-        path = Paths.get(root);
+    @Override
+    public String getOrigin() {
+        return origin;
     }
 
-    public void setRoot(String root) {
-        this.root = root;
-        path = Paths.get(root);
+    @Override
+    public void setOrigin(String origin) {
+        this.origin = origin;
     }
 
-    public String getRoot() {
-        return root;
+    @Override
+    public void setCurrentRoot(String currentRoot) {
+        this.currentRoot = currentRoot;
+        path = Paths.get(currentRoot);
+    }
+
+    @Override
+    public String resolve(String root, String name) {
+        return Paths.get(root).resolve(name).toString();
+    }
+
+    @Override
+    public String getCurrentRoot() {
+        return currentRoot;
     }
 
     @Override
@@ -37,7 +53,37 @@ public class FolderProvider implements IDataProvider {
 
     @Override
     public void delete(String name) throws IOException {
-        Path pathToFile = path.resolve(name);
-        Files.deleteIfExists(pathToFile);
+        deleteFileOrFolder(path.resolve(name));
     }
+
+    @Override
+    public void createDirectory(String name) {
+        new File(path.resolve(name).toString()).mkdirs();
+    }
+
+    public static void deleteFileOrFolder(final Path path) throws IOException {
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>(){
+            @Override public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
+                    throws IOException {
+                Files.delete(file);
+                return CONTINUE;
+            }
+
+            @Override public FileVisitResult visitFileFailed(final Path file, final IOException e) {
+                return handleException(e);
+            }
+
+            private FileVisitResult handleException(final IOException e) {
+                e.printStackTrace(); // replace with more robust error handling
+                return TERMINATE;
+            }
+
+            @Override public FileVisitResult postVisitDirectory(final Path dir, final IOException e)
+                    throws IOException {
+                if(e!=null)return handleException(e);
+                Files.delete(dir);
+                return CONTINUE;
+            }
+        });
+    };
 }

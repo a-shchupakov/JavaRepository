@@ -23,6 +23,11 @@ public class SimpleVersionIncrement implements IVersionIncrement {
         return newVersion[0] + "." + newSuffix;
     }
 
+    @Override
+    public String getFirst() {
+        return firstVersion;
+    }
+
     private int incrementByOne(String version){
         return Integer.parseInt(version) + step;
     }

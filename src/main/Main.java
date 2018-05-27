@@ -2,6 +2,7 @@ package main;
 
 import perfomance.CommandFactory;
 import managment.Manager;
+import utils.data.FolderProvider;
 import utils.data.NetDataTransporter;
 import utils.encrypt.IEncryptor;
 import utils.serializers.Serializer;
@@ -24,7 +25,6 @@ public class Main {
 
             //StraightEncryptingDataTransporter transporter1 = new StraightEncryptingDataTransporter(encryptor);
             //StraightEncryptingDataTransporter transporter2 = new StraightEncryptingDataTransporter(encryptor);
-
 
             InetAddress ipAddress = InetAddress.getByName("127.0.0.1");
             int port = 12345;

@@ -17,4 +17,34 @@ public class EmptyDataProvider implements IDataProvider {
     public void delete(String name) {
 
     }
+
+    @Override
+    public void createDirectory(String name) {
+
+    }
+
+    @Override
+    public String getCurrentRoot() {
+        return null;
+    }
+
+    @Override
+    public void setCurrentRoot(String currentRoot) {
+
+    }
+
+    @Override
+    public String resolve(String root, String name) {
+        return null;
+    }
+
+    @Override
+    public String getOrigin() {
+        return null;
+    }
+
+    @Override
+    public void setOrigin(String origin) {
+
+    }
 }
