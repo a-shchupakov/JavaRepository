@@ -30,10 +30,11 @@ public class Repo implements ICommandProcessor {
     }
 
     @Override
-    public ICommandPacket process(ICommand command) {
+    public ICommandPacket process(ICommand command) { //TODO: finish command processing
         ICommandPacket response = EmptyPacket.INSTANCE;
 
         if (dataProvider.getOrigin() == null){
+            // Hе можем обработать команды, кроме clone и add.
             if (command instanceof CreateCommand){
                 command = processCreateCommand(command);
             }
@@ -43,9 +44,8 @@ public class Repo implements ICommandProcessor {
                 dataProvider.setOrigin(versionControl.getPathToRepo(name));
                 currentRepoName = name;
             }
-            //не можем обработать команды, кроме clone и add.
-            versionControl.createRepo("Add content"); // if add
-            dataProvider.setCurrentRoot("Clone content"); // if clone
+            else
+                command = EmptyCommand.INSTANCE;
         }
         else {
             if (command instanceof DataCommand) {

@@ -26,7 +26,7 @@ public class User implements ICommandProcessor {
     }
 
     @Override
-    public ICommandPacket process(ICommand command) {
+    public ICommandPacket process(ICommand command) { //TODO: finish command processing
         return null;
     }
 
