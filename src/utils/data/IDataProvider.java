@@ -1,6 +1,9 @@
 package utils.data;
 
+import javafx.util.Pair;
+
 import java.io.IOException;
+import java.util.List;
 
 public interface IDataProvider {
     byte[] read(String name) throws IOException;
@@ -12,4 +15,5 @@ public interface IDataProvider {
     String resolve(String root, String name);
     String getOrigin();
     void setOrigin(String origin);
+    List<Pair<String, byte[]>> walkThrough(String dir) throws IOException;
 }

@@ -10,6 +10,28 @@ public class VersionControl {
     private final IDataProvider dataProvider;
     private Map<String, String> repositories;
     private Map<String, String> repoLastVersion;
+    public static int SOCKET_ERROR;
+    public static int TRANSPORT_ERROR;
+    public static int WRITE_ERROR;
+    public static int SUCCESS;
+    public static int NO_SUCH_VERSION_ERROR;
+    public static int UNKNOWN_ERROR;
+    public static int CONNECTION_ERROR;
+    public static int NO_SUCH_REPO_ERROR;
+    public static int NO_REPO_SELECTED_ERROR;
+
+
+    static {
+        SOCKET_ERROR = 401;
+        TRANSPORT_ERROR = 402;
+        WRITE_ERROR = 403;
+        NO_SUCH_VERSION_ERROR = 405;
+        NO_SUCH_REPO_ERROR = 404;
+        NO_REPO_SELECTED_ERROR = 406;
+        SUCCESS = 200;
+        UNKNOWN_ERROR = 444;
+        CONNECTION_ERROR = 522;
+    }
 
     public VersionControl(IDataProvider dataProvider, String repoDirectory){
         this.repoDirectory = repoDirectory;

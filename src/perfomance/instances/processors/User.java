@@ -42,23 +42,4 @@ public class User implements ICommandProcessor {
     public ICommandPacket get() throws TransporterException {
         return manager.getFromAnotherManager();
     }
-
-    private ICommandPacket createDeletePacket(String ... names){
-        return new DeletePacket(names);
-    }
-
-    private ICommandPacket createWritePacket(String ... names){
-        byte[][] filesContent = new byte[names.length][];
-        for (int i = 0; i < names.length; i++) {
-            byte[] data;
-            try {
-                data = dataProvider.read(names[i]);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return EmptyPacket.INSTANCE;
-            }
-            filesContent[i] = data;
-        }
-        return new WritePacket(names, filesContent);
-    }
 }

@@ -1,9 +1,12 @@
 package utils.data;
 
+import javafx.util.Pair;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.TERMINATE;
@@ -85,5 +88,31 @@ public class FolderProvider implements IDataProvider {
                 return CONTINUE;
             }
         });
-    };
+    }
+
+    @Override
+    public List<Pair<String, byte[]>> walkThrough(String dir) throws IOException{
+        File folder = Paths.get(dir).toFile();
+        List<Pair<String, byte[]>> listOfFiles = new ArrayList<>();
+        addFilesToList(folder, listOfFiles, "");
+        return listOfFiles;
+    }
+
+    private void addFilesToList(File dir, List<Pair<String, byte[]>> listOfFiles, String prefix) throws IOException{
+        if(dir == null || dir.listFiles() == null){
+            return;
+        }
+        for (File entry : dir.listFiles()) {
+            if (entry.isFile()) {
+                String name = entry.getName();
+                if (!prefix.isEmpty())
+                    name = prefix + "\\" + name;
+                listOfFiles.add(new Pair<>(name, Files.readAllBytes(entry.toPath())));
+            }
+            else {
+                String newPrefix = (prefix.isEmpty()) ? entry.getName() : prefix + "\\" + entry.getName();
+                addFilesToList(entry, listOfFiles, newPrefix);
+            }
+        }
+    }
 }

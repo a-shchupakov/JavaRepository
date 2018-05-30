@@ -27,7 +27,7 @@ public class RepoClient {
             OutputStream outputStream = socket.getOutputStream();
 
             CommandFactory factory = new CommandFactory();
-            IEncryptor encryptor = new XorEncryptor("same super secret phrase".getBytes());
+            IEncryptor encryptor = new XorEncryptor();
             NetDataTransporter transporter = new NetDataTransporter(encryptor, inputStream, outputStream);
             Manager manager = new Manager(new Serializer(), transporter, factory);
             User user = new User(manager);

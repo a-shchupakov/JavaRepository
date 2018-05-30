@@ -42,6 +42,10 @@ public class NetDataTransporter implements IDataTransporter {
         }
     }
 
+    public void setSecret(Object secret){
+        encryptor.setSecret(secret);
+    }
+
     public void setByteCount(int byteCount) {
         this.byteCount = byteCount;
     }

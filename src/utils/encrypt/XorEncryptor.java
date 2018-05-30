@@ -1,10 +1,20 @@
 package utils.encrypt;
 
 public class XorEncryptor implements IEncryptor {
-    private final byte[] secret;
+    private byte[] secret;
 
-    private XorEncryptor(){
+    public XorEncryptor(){
         secret = null;
+    }
+
+    @Override
+    public void setSecret(Object secret) {
+        this.secret = (byte[]) secret;
+    }
+
+    @Override
+    public byte[] getSecret() {
+        return secret;
     }
 
     public XorEncryptor(byte[] key){
@@ -23,7 +33,7 @@ public class XorEncryptor implements IEncryptor {
     private byte[] xor(final byte[] input) {
         final byte[] output = new byte[input.length];
         if (secret == null || secret.length == 0) {
-            throw new IllegalArgumentException("Empty security key");
+            return input;
         }
         int sPos = 0;
         for (int pos = 0; pos < input.length; ++pos) {
