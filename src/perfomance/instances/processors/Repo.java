@@ -10,10 +10,12 @@ import perfomance.instances.packets.EmptyPacket;
 import perfomance.instances.packets.Md5Packet;
 import perfomance.instances.packets.ResponsePacket;
 import perfomance.instances.packets.SocketPacket;
+import utils.Md5Hash;
 import utils.Zipper;
 import utils.IVersionIncrement;
 import utils.data.IDataProvider;
 import utils.data.TransporterException;
+import utils.encrypt.IEncryptor;
 import web_server.VersionControl;
 import web_server.VersionControlServer;
 
@@ -36,12 +38,14 @@ public class Repo implements ICommandProcessor {
     private Map<String, String[]> versionContent;
     private Map<String, String> prevVersionMapNames;
     private int socketTimeOut;
+    private IEncryptor encryptor;
 
-    public Repo(Manager manager, VersionControl versionControl, IDataProvider dataProvider, IVersionIncrement versionIncrement){
+    public Repo(Manager manager, VersionControl versionControl, IDataProvider dataProvider, IVersionIncrement versionIncrement, IEncryptor encryptor){
         this.versionControl = versionControl;
         this.dataProvider = dataProvider;
         this.versionIncrement = versionIncrement;
         this.manager = manager;
+        this.encryptor = encryptor;
         versionMapPaths = new HashMap<>();
         versionContent = new HashMap<>();
         prevVersionMapNames = new HashMap<>();
@@ -54,7 +58,7 @@ public class Repo implements ICommandProcessor {
     public ICommandPacket process(ICommand command) {
         ICommandPacket response = EmptyPacket.INSTANCE;
         if (command instanceof EncryptionCommand){
-            manager.setSecret(((EncryptionCommand) command).getSecret());
+            encryptor.setSecret(((EncryptionCommand) command).getSecret());
             return new ResponsePacket(VersionControl.SUCCESS, "Ok");
         }
 
@@ -88,6 +92,7 @@ public class Repo implements ICommandProcessor {
                 response = processMd5Command((Md5Command) command);
             }
         }
+
         return response;
     }
 
@@ -112,7 +117,7 @@ public class Repo implements ICommandProcessor {
         for (int i = 0; i < versionFiles.size(); i++){
             pair = versionFiles.get(i);
             names[i] = pair.getKey();
-            hashes[i] = pair.getValue();
+            hashes[i] = Md5Hash.getMd5Hash(pair.getValue());
         }
         return new Md5Packet("response", names, hashes);
     }
@@ -124,6 +129,8 @@ public class Repo implements ICommandProcessor {
 
     private ICommandPacket cloneDirectory(String name){
         String lastVersion = versionControl.getLastVersion(name);
+        if (lastVersion.isEmpty())
+            return new ResponsePacket(VersionControl.SUCCESS, "Cloned");
         return processRevertCommand(lastVersion, true);
     }
 
@@ -172,7 +179,7 @@ public class Repo implements ICommandProcessor {
                 contents[i] = pair.getValue();
             }
             currentVersion = version;
-            os.write(Zipper.zipMultiple(names, contents));
+            os.write(encryptor.encrypt(Zipper.zipMultiple(names, contents)));
             return new ResponsePacket(VersionControl.SUCCESS, "Ok");
         }
         catch (SocketTimeoutException e){
@@ -251,7 +258,7 @@ public class Repo implements ICommandProcessor {
             dataSocket = serverSocket.accept();
             is = dataSocket.getInputStream();
             byte[] data = readFromStream(is);
-            List<Pair<String, byte[]>> files = Zipper.unzipMultiple(data);
+            List<Pair<String, byte[]>> files = Zipper.unzipMultiple(encryptor.decrypt(data));
             boolean success = writeToVersion(newVersion, files);
             if (success) {
                 versionControl.updateLastVersion(currentRepoName, newVersion);

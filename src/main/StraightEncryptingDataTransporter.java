@@ -39,9 +39,4 @@ public class StraightEncryptingDataTransporter extends EncryptingDataTransporter
     protected byte[] decrypt(byte[] input) {
         return encryptor.decrypt(input);
     }
-
-    @Override
-    public void setSecret(Object secret) {
-
-    }
 }

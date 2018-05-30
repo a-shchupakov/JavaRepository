@@ -20,10 +20,6 @@ public class Manager {
         this.dataTransporter = dataTransporter;
     }
 
-    public void setSecret(Object secret){
-        dataTransporter.setSecret(secret);
-    }
-
     public void setCommandProcessor(ICommandProcessor commandProcessor) {
         this.commandProcessor = commandProcessor;
     }

@@ -31,17 +31,19 @@ public class RepoClient {
             IEncryptor encryptor = new XorEncryptor();
             NetDataTransporter transporter = new NetDataTransporter(encryptor, inputStream, outputStream);
             Manager manager = new Manager(new Serializer(), transporter, factory);
-            User user = new User(manager, new FolderProvider());
+            User user = new User(manager, new FolderProvider(), address, encryptor);
             manager.setCommandProcessor(user);
 
             BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in));
             while (true) {
+                System.out.println("Type your command");
                 String message = consoleIn.readLine();
-                // вызвать sendPacket и передать его...
+                if ("exit".equals(message.toLowerCase()))
+                    break;
+                user.sendPacket(message);
+                user.process(user.get());
             }
-
-
-
+            System.out.println("Exiting");
         }
         catch (Exception e){
             return;

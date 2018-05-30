@@ -101,7 +101,15 @@ public class FolderProvider implements IDataProvider {
 
     @Override
     public void clearDirectory(String dir){
-        purgeDirectory(Paths.get(dir).toFile());
+        File directoryFile = Paths.get(dir).toFile();
+        if (!directoryFile.exists()) {
+            try {
+                Files.createDirectories(directoryFile.toPath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        purgeDirectory(directoryFile);
     }
 
     private void purgeDirectory(File dir) {

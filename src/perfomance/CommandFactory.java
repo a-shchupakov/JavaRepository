@@ -6,9 +6,7 @@ import perfomance.instances.packets.*;
 public class CommandFactory {
     public ICommand createCommand(ICommandPacket packet){
         ICommand command = null;
-        if (packet instanceof InfoPacket)
-            command = createInfoCommand(packet);
-        else if (packet instanceof EmptyPacket)
+        if (packet instanceof EmptyPacket)
             command = createEmptyCommand(packet);
         else if (packet instanceof Md5Packet)
             command = createMd5Command(packet);
@@ -22,6 +20,10 @@ public class CommandFactory {
             command = new RevertCommand(((RevertPacket) packet).version, ((RevertPacket) packet).hard);
         else if (packet instanceof EncryptionPacket)
             command = new EncryptionCommand(((EncryptionPacket) packet).secret, ((EncryptionPacket) packet).type);
+        else if (packet instanceof CreatePacket)
+            command = new CreateCommand(((CreatePacket) packet).toCreate);
+        else if (packet instanceof ClonePacket)
+            command = new CloneCommand(((ClonePacket) packet).toClone);
         if (command == null)
             command = EmptyCommand.INSTANCE;
         return command;
