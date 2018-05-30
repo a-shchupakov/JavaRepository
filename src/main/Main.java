@@ -27,13 +27,14 @@ public class Main {
 //            //StraightEncryptingDataTransporter transporter1 = new StraightEncryptingDataTransporter(encryptor);
 //            //StraightEncryptingDataTransporter transporter2 = new StraightEncryptingDataTransporter(encryptor);
 //
-//            InetAddress ipAddress = InetAddress.getByName("127.0.0.1");
-//            int port = 12345;
-//
-//            ServerSocket server = new ServerSocket(port);
-//            Socket clientSocket = new Socket(ipAddress, port);
-//            Socket client = server.accept();
-//
+            InetAddress ipAddress = InetAddress.getByName("127.0.0.1");
+            int port = 12345;
+
+            ServerSocket server = new ServerSocket(port);
+            server.setSoTimeout(50);
+            //Socket clientSocket = new Socket(ipAddress, port);
+            Socket client = server.accept();
+
 //            NetDataTransporter transporter1 = new NetDataTransporter(encryptor, clientSocket.getInputStream(), clientSocket.getOutputStream());
 //            NetDataTransporter transporter2 = new NetDataTransporter(encryptor, client.getInputStream(), client.getOutputStream());
 //
@@ -44,7 +45,7 @@ public class Main {
 //            Manager manager2 = new Manager(new Serializer(), transporter2, factory);
 //            SimpleUser user2 = new SimpleUser(root2, "server", manager2);
 //            manager2.setCommandProcessor(user2);
-//
+
 //            System.out.println("Finished constructing");
 ////            user1.send(user1.createWritePacket("text.txt", "1.txt", "35.txt"));
 ////            user2.get();
@@ -53,13 +54,13 @@ public class Main {
 ////            user1.get();
 
 
-            FolderProvider provider = new FolderProvider();
-            for (Pair<String, byte[]> pair: provider.walkThrough("D:\\IT\\ООП\\практика\\Репозиторий\\tests\\junk_to_del1"))
-                System.out.println(pair.getKey());
+//            FolderProvider provider = new FolderProvider();
+//            for (Pair<String, byte[]> pair: provider.walkThrough("D:\\IT\\ООП\\практика\\Репозиторий\\tests\\junk_to_del1"))
+//                System.out.println(pair.getKey());
         }
 
         catch (Exception e){
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
 
     }

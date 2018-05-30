@@ -19,6 +19,7 @@ public class VersionControl {
     public static int CONNECTION_ERROR;
     public static int NO_SUCH_REPO_ERROR;
     public static int NO_REPO_SELECTED_ERROR;
+    public static int COMMAND_NOT_ALLOWED;
 
 
     static {
@@ -31,6 +32,7 @@ public class VersionControl {
         SUCCESS = 200;
         UNKNOWN_ERROR = 444;
         CONNECTION_ERROR = 522;
+        COMMAND_NOT_ALLOWED = 433;
     }
 
     public VersionControl(IDataProvider dataProvider, String repoDirectory){

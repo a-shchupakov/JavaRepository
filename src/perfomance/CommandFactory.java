@@ -36,7 +36,7 @@ public class CommandFactory {
     }
 
     private Md5Command createMd5Command(ICommandPacket packet){
-        return new Md5Command(((Md5Packet) packet).md5Bytes);
+        return new Md5Command(((Md5Packet) packet).type, ((Md5Packet) packet).names, ((Md5Packet) packet).md5Bytes);
     }
 
     private ResponseCommand createResponseCommand(ICommandPacket packet){

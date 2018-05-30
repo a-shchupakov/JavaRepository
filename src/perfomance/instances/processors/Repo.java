@@ -7,6 +7,7 @@ import perfomance.ICommandPacket;
 import perfomance.ICommandProcessor;
 import perfomance.instances.commands.*;
 import perfomance.instances.packets.EmptyPacket;
+import perfomance.instances.packets.Md5Packet;
 import perfomance.instances.packets.ResponsePacket;
 import perfomance.instances.packets.SocketPacket;
 import utils.Zipper;
@@ -22,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.*;
 
 @SuppressWarnings("Duplicates")
@@ -35,6 +37,7 @@ public class Repo implements ICommandProcessor {
     private String currentRepoName;
     private Map<String, String[]> versionContent;
     private Map<String, String> prevVersionMapNames;
+    private int socketTimeOut;
 
     public Repo(Manager manager, VersionControl versionControl, IDataProvider dataProvider, IVersionIncrement versionIncrement){
         this.versionControl = versionControl;
@@ -45,6 +48,7 @@ public class Repo implements ICommandProcessor {
         versionContent = new HashMap<>();
         prevVersionMapNames = new HashMap<>();
         currentVersion = "";
+        socketTimeOut = 5000;
     }
 
     @Override
@@ -81,8 +85,37 @@ public class Repo implements ICommandProcessor {
             else if (command instanceof RevertCommand){
                 response = processRevertCommand(((RevertCommand) command).getVersion(), ((RevertCommand) command).isHard());
             }
+            else if (command instanceof Md5Command){
+                response = processMd5Command((Md5Command) command);
+            }
         }
         return response;
+    }
+
+    private ICommandPacket processMd5Command(Md5Command command){
+        if (!command.getType().toLowerCase().equals("query"))
+            return new ResponsePacket(VersionControl.COMMAND_NOT_ALLOWED, "Command not allowed");
+        List<Pair<String, byte[]>> versionFiles;
+        try {
+            versionFiles = collectVersion(currentVersion, true);
+        }
+        catch (IOException e){
+            return new ResponsePacket(VersionControl.UNKNOWN_ERROR, "Unknown error occurred");
+        }
+
+        if (versionFiles == null)
+            return new ResponsePacket(VersionControl.UNKNOWN_ERROR, "Unknown error occurred");
+
+        String names[] = new String[versionFiles.size()];
+        byte[][] hashes = new byte[versionFiles.size()][];
+
+        Pair<String, byte[]> pair;
+        for (int i = 0; i < versionFiles.size(); i++){
+            pair = versionFiles.get(i);
+            names[i] = pair.getKey();
+            hashes[i] = pair.getValue();
+        }
+        return new Md5Packet("response", names, hashes);
     }
 
     private ICommandPacket processCreateCommand(ICommand command){
@@ -100,7 +133,7 @@ public class Repo implements ICommandProcessor {
             version = currentVersion;
         List<Pair<String, byte[]>> filesToSend;
         try {
-            filesToSend = collectFiles(version, hard);
+            filesToSend = collectVersion(version, hard);
             if (filesToSend == null)
                 return new ResponsePacket(VersionControl.NO_SUCH_VERSION_ERROR, "No such version (" + version + ") is found");
         }
@@ -127,6 +160,7 @@ public class Repo implements ICommandProcessor {
             }
         }
         try{
+            serverSocket.setSoTimeout(socketTimeOut);
             Socket dataSocket = serverSocket.accept();
             OutputStream os = dataSocket.getOutputStream();
             String[] names = new String[filesToSend.size()];
@@ -136,8 +170,12 @@ public class Repo implements ICommandProcessor {
                 names[i] = pair.getKey();
                 contents[i] = pair.getValue();
             }
+            currentVersion = version;
             os.write(Zipper.zipMultiple(names, contents));
             return new ResponsePacket(VersionControl.SUCCESS, "Ok");
+        }
+        catch (SocketTimeoutException e){
+            return new ResponsePacket(VersionControl.CONNECTION_ERROR, "No connection was accepted");
         }
         catch (IOException e){
             e.printStackTrace();
@@ -146,7 +184,7 @@ public class Repo implements ICommandProcessor {
 
     }
 
-    private List<Pair<String, byte[]>> collectFiles(String version, boolean hard) throws IOException{
+    private List<Pair<String, byte[]>> collectVersion(String version, boolean hard) throws IOException{
         String[] names = versionContent.get(version);
         if (names == null)
             return null;
@@ -202,6 +240,7 @@ public class Repo implements ICommandProcessor {
             }
         }
         try {
+            serverSocket.setSoTimeout(socketTimeOut);
             Socket dataSocket = serverSocket.accept();
             InputStream is = dataSocket.getInputStream();
             byte[] data = readFromStream(is);
@@ -213,6 +252,9 @@ public class Repo implements ICommandProcessor {
                 currentVersion = newVersion;
             }
             return (success) ? new ResponsePacket(VersionControl.SUCCESS, "Ok") : new ResponsePacket(VersionControl.WRITE_ERROR, "Cannot save file");
+        }
+        catch (SocketTimeoutException e){
+            return new ResponsePacket(VersionControl.CONNECTION_ERROR, "No connection was accepted");
         }
         catch (IOException e){
             e.printStackTrace();
