@@ -318,12 +318,12 @@ public class Repo implements ICommandProcessor {
 
     @Override
     public void send(ICommandPacket packet) throws TransporterException {
-        manager.sendToAnotherProcessor(packet);
+        manager.sendPacket(packet);
     }
 
     @Override
-    public ICommandPacket get() throws TransporterException {
-        return manager.getFromAnotherManager();
+    public ICommand get() throws TransporterException {
+        return manager.getCommand();
     }
 
     private static void close(Closeable closeable){

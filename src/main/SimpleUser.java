@@ -3,17 +3,10 @@ package main;
 import perfomance.ICommand;
 import perfomance.ICommandPacket;
 import perfomance.ICommandProcessor;
-import perfomance.instances.commands.DataCommand;
-import perfomance.instances.commands.InfoCommand;
-import perfomance.instances.commands.Md5Command;
-import perfomance.instances.packets.EmptyPacket;
-import perfomance.instances.packets.InfoPacket;
 import managment.Manager;
 import utils.data.FolderProvider;
 import utils.data.IDataProvider;
 import utils.data.TransporterException;
-
-import java.io.IOException;
 
 @SuppressWarnings("Duplicates")
 public class SimpleUser implements ICommandProcessor {
@@ -41,11 +34,11 @@ public class SimpleUser implements ICommandProcessor {
 
     @Override
     public void send(ICommandPacket packet) throws TransporterException {
-        manager.sendToAnotherProcessor(packet);
+        manager.sendPacket(packet);
     }
 
     @Override
-    public ICommandPacket get() throws TransporterException {
-        return manager.getFromAnotherManager();
+    public ICommand get() throws TransporterException {
+        return manager.getCommand();
     }
 }

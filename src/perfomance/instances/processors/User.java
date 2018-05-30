@@ -98,15 +98,13 @@ public class User implements ICommandProcessor {
         return null;
     }
 
-
-
     @Override
     public void send(ICommandPacket packet) throws TransporterException {
-        manager.sendToAnotherProcessor(packet);
+        manager.sendPacket(packet);
     }
 
     @Override
-    public ICommandPacket get() throws TransporterException {
-        return manager.getFromAnotherManager();
+    public ICommand get() throws TransporterException {
+        return manager.getCommand();
     }
 }
