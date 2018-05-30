@@ -150,6 +150,8 @@ public class Repo implements ICommandProcessor {
         }
 
         ServerSocket serverSocket = packetAndSocket.getValue();
+        OutputStream os = null;
+        Socket dataSocket = null;
         try {
             send(packetAndSocket.getKey());
         }
@@ -161,10 +163,10 @@ public class Repo implements ICommandProcessor {
                 return new ResponsePacket(VersionControl.TRANSPORT_ERROR, "Cannot send port to connect to");
             }
         }
-        try{
+        try {
             serverSocket.setSoTimeout(socketTimeOut);
-            Socket dataSocket = serverSocket.accept();
-            OutputStream os = dataSocket.getOutputStream();
+            dataSocket = serverSocket.accept();
+            os = dataSocket.getOutputStream();
             String[] names = new String[filesToSend.size()];
             byte[][] contents = new byte[filesToSend.size()][];
             for (int i = 0; i < filesToSend.size(); i++){
@@ -182,6 +184,18 @@ public class Repo implements ICommandProcessor {
         catch (IOException e){
             e.printStackTrace();
             return new ResponsePacket(VersionControl.CONNECTION_ERROR, "Unknown error occurred");
+        }
+        finally {
+            try {
+                serverSocket.close();
+                if (dataSocket != null)
+                    dataSocket.close();
+                if (os != null)
+                    os.close();
+            }
+            catch (IOException e){
+                System.out.println("Closing extra connection with error " + e.getMessage());
+            }
         }
 
     }
@@ -229,6 +243,8 @@ public class Repo implements ICommandProcessor {
         }
         ICommandPacket socketPacket = packetAndSocket.getKey();
         ServerSocket serverSocket = packetAndSocket.getValue();
+        Socket dataSocket = null;
+        InputStream is = null;
         versionContent.put(newVersion, command.getFiles());
         try {
             send(socketPacket);
@@ -243,8 +259,8 @@ public class Repo implements ICommandProcessor {
         }
         try {
             serverSocket.setSoTimeout(socketTimeOut);
-            Socket dataSocket = serverSocket.accept();
-            InputStream is = dataSocket.getInputStream();
+            dataSocket = serverSocket.accept();
+            is = dataSocket.getInputStream();
             byte[] data = readFromStream(is);
             List<Pair<String, byte[]>> files = Zipper.unzipMultiple(data);
             boolean success = writeToVersion(newVersion, files);
@@ -263,6 +279,18 @@ public class Repo implements ICommandProcessor {
             e.printStackTrace();
             return new ResponsePacket(VersionControl.CONNECTION_ERROR, "Unknown error occurred");
         }
+        finally {
+            try {
+                serverSocket.close();
+                if (dataSocket != null)
+                    dataSocket.close();
+                if (is != null)
+                    is.close();
+            }
+            catch (IOException e){
+                System.out.println("Closing extra connection with error " + e.getMessage());
+            }
+        }
     }
 
     private boolean writeToVersion(String version, List<Pair<String, byte[]>> files){
@@ -280,19 +308,15 @@ public class Repo implements ICommandProcessor {
         return true;
     }
 
-    private byte[] readFromStream(InputStream inputStream){
-        byte[] bytes = new byte[0];
-        try {
-            ByteArrayOutputStream tempStream = new ByteArrayOutputStream();
-            int count;
-            byte[] buffer = new byte[4096];
-            count = inputStream.read(buffer);
-            tempStream.write(buffer, 0, count);
-            bytes = tempStream.toByteArray();
-            tempStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private byte[] readFromStream(InputStream inputStream) throws IOException{
+        byte[] bytes;
+        ByteArrayOutputStream tempStream = new ByteArrayOutputStream();
+        int count;
+        byte[] buffer = new byte[4096];
+        count = inputStream.read(buffer);
+        tempStream.write(buffer, 0, count);
+        bytes = tempStream.toByteArray();
+        tempStream.close();
         return bytes;
     }
 
