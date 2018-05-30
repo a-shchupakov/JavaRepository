@@ -6,10 +6,8 @@ import perfomance.ICommandProcessor;
 import perfomance.instances.commands.DataCommand;
 import perfomance.instances.commands.InfoCommand;
 import perfomance.instances.commands.Md5Command;
-import perfomance.instances.packets.DeletePacket;
 import perfomance.instances.packets.EmptyPacket;
 import perfomance.instances.packets.InfoPacket;
-import perfomance.instances.packets.WritePacket;
 import managment.Manager;
 import utils.data.FolderProvider;
 import utils.data.IDataProvider;
@@ -71,24 +69,5 @@ public class SimpleUser implements ICommandProcessor {
     @Override
     public ICommandPacket get() throws TransporterException {
         return manager.getFromAnotherManager();
-    }
-
-    public ICommandPacket createWritePacket(String ... names){
-        byte[][] filesContent = new byte[names.length][];
-        for (int i = 0; i < names.length; i++) {
-            byte[] data;
-            try {
-                data = dataProvider.read(names[i]);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return EmptyPacket.INSTANCE;
-            }
-            filesContent[i] = data;
-        }
-        return new WritePacket(names, filesContent);
-    }
-
-    public ICommandPacket createDeletePacket(String ... names){
-        return new DeletePacket(names);
     }
 }

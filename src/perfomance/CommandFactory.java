@@ -10,14 +10,10 @@ public class CommandFactory {
             command = createInfoCommmand(packet);
         else if (packet instanceof EmptyPacket)
             command = createEmptyCommand(packet);
-        else if (packet instanceof DeletePacket)
-            command = createDeleteCommand(packet);
         else if (packet instanceof Md5Packet)
             command = createMd5Command(packet);
         else if (packet instanceof ResponsePacket)
             command = createResponseCommamd(packet);
-        else if (packet instanceof WritePacket)
-            command = createWriteCommand(packet);
         if (command == null)
             command = EmptyCommand.INSTANCE;
         return command;
@@ -29,10 +25,6 @@ public class CommandFactory {
 
     private EmptyCommand createEmptyCommand(ICommandPacket packet){
         return EmptyCommand.INSTANCE;
-    }
-
-    private DeleteCommand createDeleteCommand(ICommandPacket packet){
-        return new DeleteCommand(((DeletePacket) packet).toDelete);
     }
 
     private Md5Command createMd5Command(ICommandPacket packet){
@@ -50,10 +42,5 @@ public class CommandFactory {
         }
 
         return new ResponseCommand(responsePacket.error, responsePacket.errorInfo, innerCommand);
-    }
-
-    private WriteCommand createWriteCommand(ICommandPacket packet){
-        WritePacket writePacket = (WritePacket) packet;
-        return new WriteCommand(writePacket.names, writePacket.bytes);
     }
 }
