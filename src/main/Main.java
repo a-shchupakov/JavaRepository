@@ -38,13 +38,13 @@ public class Main {
                 }
             }).start();
 
-            //TempRepoUser client = new TempRepoUser(new String[] {"add repo", "clone D:\\IT\\ООП\\практика\\Репозиторий\\tests\\local repo", "commit", "commit"});
-            RepoClient client = new RepoClient();
+            TempRepoUser client = new TempRepoUser(new String[] {"add repo", "clone D:\\IT\\ООП\\практика\\Репозиторий\\tests\\local repo", "commit", "commit"});
+            //RepoClient client = new RepoClient();
             client.start(port, ipAddress);
         }
 
         catch (Exception e){
-            e.printStackTrace();
+
         }
     }
 }

@@ -29,10 +29,6 @@ public class CommandFactory {
         return command;
     }
 
-    private InfoCommand createInfoCommand(ICommandPacket packet){
-        return new InfoCommand(((InfoPacket) packet).info);
-    }
-
     private EmptyCommand createEmptyCommand(ICommandPacket packet){
         return EmptyCommand.INSTANCE;
     }
