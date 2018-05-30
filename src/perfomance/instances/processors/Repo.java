@@ -17,16 +17,13 @@ import utils.data.TransporterException;
 import web_server.VersionControl;
 import web_server.VersionControlServer;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.*;
 
-@SuppressWarnings("Duplicates")
+
 public class Repo implements ICommandProcessor {
     private final Manager manager;
     private final VersionControl versionControl;
@@ -144,7 +141,7 @@ public class Repo implements ICommandProcessor {
         }
         Pair<ICommandPacket, ServerSocket> packetAndSocket;
         try {
-            packetAndSocket = createSocket();
+            packetAndSocket = createSocket("read");
         } catch (IOException e) {
             return new ResponsePacket(VersionControl.SOCKET_ERROR, "Server is busy, try later");
         }
@@ -186,18 +183,10 @@ public class Repo implements ICommandProcessor {
             return new ResponsePacket(VersionControl.CONNECTION_ERROR, "Unknown error occurred");
         }
         finally {
-            try {
-                serverSocket.close();
-                if (dataSocket != null)
-                    dataSocket.close();
-                if (os != null)
-                    os.close();
-            }
-            catch (IOException e){
-                System.out.println("Closing extra connection with error " + e.getMessage());
-            }
+            close(serverSocket);
+            close(dataSocket);
+            close(os);
         }
-
     }
 
     private List<Pair<String, byte[]>> collectVersion(String version, boolean hard) throws IOException{
@@ -237,7 +226,7 @@ public class Repo implements ICommandProcessor {
         String newVersion = (lastVersion.isEmpty()) ? versionIncrement.getFirst() : versionIncrement.increment(lastVersion);
         Pair<ICommandPacket, ServerSocket> packetAndSocket;
         try {
-            packetAndSocket = createSocket();
+            packetAndSocket = createSocket("write");
         } catch (IOException e) {
             return new ResponsePacket(VersionControl.SOCKET_ERROR, "Server is busy, try later");
         }
@@ -270,7 +259,9 @@ public class Repo implements ICommandProcessor {
                 currentVersion = newVersion;
                 lastVersion = newVersion;
             }
-            return (success) ? new ResponsePacket(VersionControl.SUCCESS, "Ok") : new ResponsePacket(VersionControl.WRITE_ERROR, "Cannot save file");
+            return (success)
+                    ? new ResponsePacket(VersionControl.SUCCESS, "Commit was pushed to " + currentVersion + "version" )
+                    : new ResponsePacket(VersionControl.WRITE_ERROR, "Cannot save file");
         }
         catch (SocketTimeoutException e){
             return new ResponsePacket(VersionControl.CONNECTION_ERROR, "No connection was accepted");
@@ -280,16 +271,9 @@ public class Repo implements ICommandProcessor {
             return new ResponsePacket(VersionControl.CONNECTION_ERROR, "Unknown error occurred");
         }
         finally {
-            try {
-                serverSocket.close();
-                if (dataSocket != null)
-                    dataSocket.close();
-                if (is != null)
-                    is.close();
-            }
-            catch (IOException e){
-                System.out.println("Closing extra connection with error " + e.getMessage());
-            }
+            close(serverSocket);
+            close(dataSocket);
+            close(is);
         }
     }
 
@@ -320,17 +304,16 @@ public class Repo implements ICommandProcessor {
         return bytes;
     }
 
-    private Pair<ICommandPacket, ServerSocket> createSocket() throws IOException {
+    private Pair<ICommandPacket, ServerSocket> createSocket(String type) throws IOException {
         ICommandPacket response;
         ServerSocket dataSocket;
         dataSocket = VersionControlServer.createSocket();
-        response = new SocketPacket(dataSocket.getLocalPort());
+        response = new SocketPacket(dataSocket.getLocalPort(), type);
         return new Pair<>(response, dataSocket);
     }
 
     @Override
-    public ICommandPacket createPacket(String identifier) {
-        return null;
+    public void sendPacket(String identifier) {
     }
 
     @Override
@@ -341,5 +324,15 @@ public class Repo implements ICommandProcessor {
     @Override
     public ICommandPacket get() throws TransporterException {
         return manager.getFromAnotherManager();
+    }
+
+    private static void close(Closeable closeable){
+        try {
+            if (closeable != null)
+                closeable.close();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
     }
 }

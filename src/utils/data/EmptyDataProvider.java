@@ -57,4 +57,9 @@ public class EmptyDataProvider implements IDataProvider {
     public List<Pair<String, byte[]>> walkThrough(String dir) throws IOException {
         return null;
     }
+
+    @Override
+    public void clearDirectory(String dir) {
+
+    }
 }

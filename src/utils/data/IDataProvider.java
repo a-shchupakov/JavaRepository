@@ -16,4 +16,5 @@ public interface IDataProvider {
     String getOrigin();
     void setOrigin(String origin);
     List<Pair<String, byte[]>> walkThrough(String dir) throws IOException;
+    void clearDirectory(String dir);
 }

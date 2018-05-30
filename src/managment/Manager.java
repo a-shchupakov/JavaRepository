@@ -33,9 +33,6 @@ public class Manager {
         this.commandProcessor = commandProcessor;
     }
 
-    public ICommandProcessor getCommandProcessor() {
-        return commandProcessor;
-    }
 
     private void sendToAnotherManager(ICommandPacket packet) throws TransporterException {
         byte[] serializedData = serializer.serialize(packet);

@@ -6,7 +6,7 @@ public class RevertPacket implements ICommandPacket {
     public String version;
     public boolean hard;
 
-    public RevertPacket(){ }
+    private RevertPacket(){ }
 
     public RevertPacket(String version, boolean hard){
         this.version = version;

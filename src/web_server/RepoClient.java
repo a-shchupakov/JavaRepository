@@ -3,6 +3,7 @@ package web_server;
 import managment.Manager;
 import perfomance.CommandFactory;
 import perfomance.instances.processors.User;
+import utils.data.FolderProvider;
 import utils.data.NetDataTransporter;
 import utils.encrypt.IEncryptor;
 import utils.encrypt.XorEncryptor;
@@ -30,13 +31,13 @@ public class RepoClient {
             IEncryptor encryptor = new XorEncryptor();
             NetDataTransporter transporter = new NetDataTransporter(encryptor, inputStream, outputStream);
             Manager manager = new Manager(new Serializer(), transporter, factory);
-            User user = new User(manager);
+            User user = new User(manager, new FolderProvider());
             manager.setCommandProcessor(user);
 
             BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in));
             while (true) {
                 String message = consoleIn.readLine();
-                // вызвать createPacket и передать его...
+                // вызвать sendPacket и передать его...
             }
 
 

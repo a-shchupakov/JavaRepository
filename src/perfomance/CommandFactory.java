@@ -17,7 +17,7 @@ public class CommandFactory {
         else if (packet instanceof CommitPacket)
             command = new CommitCommand(((CommitPacket) packet).files);
         else if (packet instanceof SocketPacket)
-            command = new SocketCommand(((SocketPacket) packet).socketPort);
+            command = new SocketCommand(((SocketPacket) packet).socketPort, ((SocketPacket) packet).type);
         else if (packet instanceof RevertPacket)
             command = new RevertCommand(((RevertPacket) packet).version, ((RevertPacket) packet).hard);
         else if (packet instanceof EncryptionPacket)

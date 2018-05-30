@@ -31,34 +31,12 @@ public class SimpleUser implements ICommandProcessor {
 
     @Override
     public ICommandPacket process(ICommand command) {
-        ICommandPacket response = null;
-        System.out.println("Executing command on CommandProcessor with id: " + id);
-        if (command instanceof InfoCommand) {
-            InfoCommand infoCommand = (InfoCommand) command;
-            infoCommand.setStream(System.out);
-        }
-        else if (command instanceof Md5Command)
-        {
-            Md5Command md5Command = (Md5Command) command;
-            for(byte b: md5Command.getMd5Bytes())
-                System.out.print(b);
-            System.out.println();
-        }
-        else if (command instanceof DataCommand){
-            DataCommand dataCommand = (DataCommand) command;
-            dataCommand.setDataProvider(dataProvider);
-            System.out.println("Executing DataCommand on CommandProcessor with id: " + id);
-        }
-        command.execute();
-
-        if (response == null)
-            response = EmptyPacket.INSTANCE;
-        return response;
+        return null;
     }
 
     @Override
-    public ICommandPacket createPacket(String identifier) {
-        return new InfoPacket("Hello from user with id: " + id);
+    public void sendPacket(String identifier) {
+
     }
 
     @Override

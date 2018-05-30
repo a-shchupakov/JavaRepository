@@ -24,6 +24,7 @@ public class FolderProvider implements IDataProvider {
     @Override
     public void setOrigin(String origin) {
         this.origin = origin;
+        setCurrentRoot(origin);
     }
 
     @Override
@@ -96,6 +97,18 @@ public class FolderProvider implements IDataProvider {
         List<Pair<String, byte[]>> listOfFiles = new ArrayList<>();
         addFilesToList(folder, listOfFiles, "");
         return listOfFiles;
+    }
+
+    @Override
+    public void clearDirectory(String dir){
+        purgeDirectory(Paths.get(dir).toFile());
+    }
+
+    private void purgeDirectory(File dir) {
+        for (File file: dir.listFiles()) {
+            if (file.isDirectory()) purgeDirectory(file);
+            file.delete();
+        }
     }
 
     private void addFilesToList(File dir, List<Pair<String, byte[]>> listOfFiles, String prefix) throws IOException{
