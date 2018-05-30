@@ -33,6 +33,7 @@ public class Repo implements ICommandProcessor {
     private IDataProvider dataProvider;
     private IVersionIncrement versionIncrement;
     private String currentVersion;
+    private String lastVersion;
     private Map<String, String> versionMapPaths;
     private String currentRepoName;
     private Map<String, String[]> versionContent;
@@ -48,6 +49,7 @@ public class Repo implements ICommandProcessor {
         versionContent = new HashMap<>();
         prevVersionMapNames = new HashMap<>();
         currentVersion = "";
+        lastVersion = "";
         socketTimeOut = 5000;
     }
 
@@ -130,7 +132,7 @@ public class Repo implements ICommandProcessor {
 
     private ICommandPacket processRevertCommand(String version, boolean hard){
         if (version.isEmpty())
-            version = currentVersion;
+            version = lastVersion;
         List<Pair<String, byte[]>> filesToSend;
         try {
             filesToSend = collectVersion(version, hard);
@@ -218,7 +220,7 @@ public class Repo implements ICommandProcessor {
     }
 
     private ICommandPacket processCommitCommand(CommitCommand command){
-        String newVersion = (currentVersion.isEmpty()) ? versionIncrement.getFirst() : versionIncrement.increment(currentVersion);
+        String newVersion = (lastVersion.isEmpty()) ? versionIncrement.getFirst() : versionIncrement.increment(lastVersion);
         Pair<ICommandPacket, ServerSocket> packetAndSocket;
         try {
             packetAndSocket = createSocket();
@@ -250,6 +252,7 @@ public class Repo implements ICommandProcessor {
                 versionControl.updateLastVersion(currentRepoName, newVersion);
                 prevVersionMapNames.put(newVersion, currentVersion);
                 currentVersion = newVersion;
+                lastVersion = newVersion;
             }
             return (success) ? new ResponsePacket(VersionControl.SUCCESS, "Ok") : new ResponsePacket(VersionControl.WRITE_ERROR, "Cannot save file");
         }
