@@ -51,7 +51,7 @@ public class Repo implements ICommandProcessor {
         prevVersionMapNames = new HashMap<>();
         currentVersion = "";
         lastVersion = "";
-        socketTimeOut = 5000;
+        socketTimeOut = 5000 * 3;
     }
 
     @Override
@@ -108,7 +108,7 @@ public class Repo implements ICommandProcessor {
         }
 
         if (versionFiles == null)
-            return new ResponsePacket(VersionControl.UNKNOWN_ERROR, "Unknown error occurred");
+            return new Md5Packet("response", new String[0], new byte[0][]);
 
         String names[] = new String[versionFiles.size()];
         byte[][] hashes = new byte[versionFiles.size()][];
@@ -231,6 +231,7 @@ public class Repo implements ICommandProcessor {
 
     private ICommandPacket processCommitCommand(CommitCommand command){
         String newVersion = (lastVersion.isEmpty()) ? versionIncrement.getFirst() : versionIncrement.increment(lastVersion);
+        System.out.println("New version on server " + newVersion);
         Pair<ICommandPacket, ServerSocket> packetAndSocket;
         try {
             packetAndSocket = createSocket("write");
@@ -265,6 +266,7 @@ public class Repo implements ICommandProcessor {
                 prevVersionMapNames.put(newVersion, currentVersion);
                 currentVersion = newVersion;
                 lastVersion = newVersion;
+                System.out.println("Commit succeeded");
             }
             return (success)
                     ? new ResponsePacket(VersionControl.SUCCESS, "Commit was pushed to " + currentVersion + "version" )

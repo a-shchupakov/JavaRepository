@@ -52,6 +52,9 @@ public class FolderProvider implements IDataProvider {
     @Override
     public void write(String name, byte[] bytes) throws IOException {
         Path pathToFile = path.resolve(name);
+        if (!pathToFile.toFile().exists()){
+            new File(pathToFile.getParent().toString()).mkdirs();
+        }
         Files.write(pathToFile, bytes);
     }
 

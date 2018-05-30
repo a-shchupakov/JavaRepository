@@ -7,6 +7,7 @@ import perfomance.ICommandPacket;
 import perfomance.ICommandProcessor;
 import perfomance.instances.commands.Md5Command;
 import perfomance.instances.commands.ResponseCommand;
+import perfomance.instances.commands.SocketCommand;
 import perfomance.instances.packets.*;
 import utils.Md5Hash;
 import utils.Zipper;
@@ -40,13 +41,20 @@ public class User implements ICommandProcessor {
             return null;
         else if (command instanceof ResponseCommand)
             System.out.println(((ResponseCommand) command).getError() + ": " + ((ResponseCommand) command).getErrorInfo());
-        else if (command instanceof SocketPacket){
-            int port = ((SocketPacket) command).socketPort;
-            String type = ((SocketPacket) command).type;
+        else if (command instanceof SocketCommand){
+            int port = ((SocketCommand) command).getSocketPort();
+            String type = ((SocketCommand) command).getType();
             Socket socket = createSocket(port);
             if (socket == null)
                 return null;
             operateWithSocket(socket, type);
+
+            try {
+                ICommand responseCommand = get();
+                process(responseCommand);
+            } catch (TransporterException e) {
+                e.printStackTrace();
+            }
         }
 
         return null;
@@ -110,7 +118,7 @@ public class User implements ICommandProcessor {
         String[] command = identifier.split(" "); // TODO: check command for correctness
         ICommandPacket packet = null;
         if (identifier.startsWith("xor")){
-            encryptor.setSecret(command[1]);
+            encryptor.setSecret(command[1]);// TODO: server doesn't know
             packet = sendEncryptPacket(command);
         }
         else if (identifier.toLowerCase().startsWith("add")){
@@ -132,6 +140,8 @@ public class User implements ICommandProcessor {
             packet = sendLogPacket(command);
         }
         try {
+            if (packet == null)
+                packet = EmptyPacket.INSTANCE;
             send(packet);
         } catch (TransporterException e) {
             e.printStackTrace();
@@ -180,6 +190,9 @@ public class User implements ICommandProcessor {
         Pair<String[], byte[][]> filesToCommit = getFilesToCommit(names, contents);
         if (filesToCommit == null)
             return null;
+
+        if (filesToCommit.getKey().length == 0 || filesToCommit.getValue().length == 0)
+            return null;
         try {
             tempBytesToSend = Zipper.zipMultiple(filesToCommit.getKey(), filesToCommit.getValue());
         } catch (IOException e) {
@@ -198,21 +211,30 @@ public class User implements ICommandProcessor {
         } catch (IOException e) {
             return null;
         }
+        boolean[] removed = new boolean[dirContents.size()];
         Map<String, byte[]> hashesMap = new HashMap<>();
         for (Pair<String, byte[]> pair: dirContents)
             hashesMap.put(pair.getKey(), Md5Hash.getMd5Hash(pair.getValue()));
 
-        for (Pair<String, byte[]> pair: dirContents){
+        for (int j = 0; j < dirContents.size(); j++){
+            Pair<String, byte[]> pair = dirContents.get(j);
             for (int i = 0; i < md5Names.length; i++){
                 if (pair.getKey().equals(md5Names[i]))
-                    if (!Arrays.equals(hashesMap.get(pair.getKey()), md5Contents[i])){
-                        names.add(pair.getKey());
-                        data.add(pair.getValue());
+                    if (Arrays.equals(hashesMap.get(pair.getKey()), md5Contents[i])){
+                        removed[j] = true;
                         break;
                     }
                     else
                         break;
             }
+        }
+        for (int j = 0; j < dirContents.size(); j++) {
+            if (removed[j])
+                continue;
+
+            Pair<String, byte[]> pair = dirContents.get(j);
+            names.add(pair.getKey());
+            data.add(pair.getValue());
         }
         String[] namesArray = new String[names.size()];
         byte[][] bytesArray = new byte[data.size()][];
