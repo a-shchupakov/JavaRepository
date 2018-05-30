@@ -9,7 +9,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class Archiver {
-    public static byte[] dearchive(byte[] input){
+    public static byte[] dearchiveOne(byte[] input){
         InputStream archivedBytes = new ByteArrayInputStream(input);
         ZipInputStream stream = new ZipInputStream(archivedBytes);
         byte[] buffer = new byte[2048];

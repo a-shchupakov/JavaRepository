@@ -61,8 +61,8 @@ public class VersionControlServer extends WebServer {
         {
             try
             {
-                InputStream is = null;
-                OutputStream os = null;
+                InputStream is;
+                OutputStream os;
                 try
                 {
                     is = m_socket.getInputStream();
@@ -78,9 +78,9 @@ public class VersionControlServer extends WebServer {
                 }
                 finally
                 {
-                    closeStream(os);
-                    closeStream(is);
-                    m_socket.close();
+//                    closeStream(os);
+//                    closeStream(is);
+//                    m_socket.close();
                 }
             }
             catch (Exception ex)

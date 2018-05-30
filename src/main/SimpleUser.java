@@ -17,6 +17,7 @@ import utils.data.TransporterException;
 
 import java.io.IOException;
 
+@SuppressWarnings("Duplicates")
 public class SimpleUser implements ICommandProcessor {
     private final Manager manager;
     private final String id;
@@ -25,7 +26,9 @@ public class SimpleUser implements ICommandProcessor {
     public SimpleUser(String root, String id, Manager manager){
         this.id = id;
         this.manager = manager;
-        this.dataProvider = new FolderProvider(root);
+        this.dataProvider = new FolderProvider();
+        dataProvider.setOrigin(root);
+        dataProvider.setCurrentRoot(dataProvider.getOrigin());
     }
 
     @Override
