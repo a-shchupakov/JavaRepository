@@ -242,7 +242,6 @@ public class Repo implements ICommandProcessor {
         ServerSocket serverSocket = packetAndSocket.getValue();
         Socket dataSocket = null;
         InputStream is = null;
-        versionContent.put(newVersion, command.getFiles());
         try {
             send(socketPacket);
         }
@@ -266,6 +265,14 @@ public class Repo implements ICommandProcessor {
                 prevVersionMapNames.put(newVersion, currentVersion);
                 currentVersion = newVersion;
                 lastVersion = newVersion;
+                versionContent.put(newVersion, command.getFiles());
+
+                System.out.println("Contents:");
+                for (Map.Entry<String, String[]> entry: versionContent.entrySet()){
+                    System.out.println(entry.getKey() + ": " + Arrays.toString(entry.getValue()));
+                }
+                System.out.println(Arrays.toString(versionMapPaths.entrySet().toArray()));
+                System.out.println(Arrays.toString(prevVersionMapNames.entrySet().toArray()));
                 System.out.println("Commit succeeded");
             }
             return (success)

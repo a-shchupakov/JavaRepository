@@ -25,6 +25,7 @@ public class User implements ICommandProcessor {
     private final Manager manager;
     private IDataProvider dataProvider;
     private byte[] tempBytesToSend;
+    private boolean tempHard;
     private InetAddress address;
     private IEncryptor encryptor;
 
@@ -99,11 +100,15 @@ public class User implements ICommandProcessor {
             close(output);
             close(socket);
             close(tempStream);
+            tempHard = false;
+            tempBytesToSend = null;
         }
     }
 
     private void writeBytes(byte[] bytes){
         try {
+            if (tempHard)
+                dataProvider.clearDirectory(dataProvider.getOrigin());
             List<Pair<String, byte[]>> files = Zipper.unzipMultiple(encryptor.decrypt(bytes));
             for (Pair<String, byte[]> pair: files){
                 dataProvider.write(pair.getKey(), pair.getValue());
@@ -187,9 +192,13 @@ public class User implements ICommandProcessor {
             e.printStackTrace();
             return null;
         }
-        Pair<String[], byte[][]> filesToCommit = getFilesToCommit(names, contents);
-        if (filesToCommit == null)
+        List<Pair<String, byte[]>> dirContents;
+        try {
+            dirContents = dataProvider.walkThrough(dataProvider.getCurrentRoot());
+        } catch (IOException e) {
             return null;
+        }
+        Pair<String[], byte[][]> filesToCommit = getFilesToCommit(names, contents, dirContents);
 
         if (filesToCommit.getKey().length == 0 || filesToCommit.getValue().length == 0)
             return null;
@@ -199,18 +208,15 @@ public class User implements ICommandProcessor {
             e.printStackTrace();
             return null;
         }
-        return new CommitPacket(filesToCommit.getKey());
+        String[] dirContentsArray = new String[dirContents.size()];
+        for (int i = 0; i < dirContents.size(); i++)
+            dirContentsArray[i] = dirContents.get(i).getKey();
+        return new CommitPacket(dirContentsArray);
     }
 
-    private Pair<String[], byte[][]> getFilesToCommit(String[] md5Names, byte[][] md5Contents){
-        List<Pair<String, byte[]>> dirContents;
+    private Pair<String[], byte[][]> getFilesToCommit(String[] md5Names, byte[][] md5Contents, List<Pair<String, byte[]>> dirContents){
         List<String> names = new ArrayList<>();
         List<byte[]> data = new ArrayList<>();
-        try {
-            dirContents = dataProvider.walkThrough(dataProvider.getCurrentRoot());
-        } catch (IOException e) {
-            return null;
-        }
         boolean[] removed = new boolean[dirContents.size()];
         Map<String, byte[]> hashesMap = new HashMap<>();
         for (Pair<String, byte[]> pair: dirContents)
@@ -247,11 +253,11 @@ public class User implements ICommandProcessor {
 
     private ICommandPacket sendRevertPacket(String[] command){
         String version = command[1];
-        boolean hard = false;
         if (command.length == 3)
-            if (command[2].equals("-hard"))
-                hard = true;
-        return new RevertPacket(version, hard);
+            if (command[2].equals("-hard")) {
+                tempHard = true;
+            }
+        return new RevertPacket(version, tempHard);
     }
 
     private ICommandPacket sendLogPacket(String[] command){
