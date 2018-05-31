@@ -26,8 +26,9 @@ public class Main {
 
             TempRepoUser client = new TempRepoUser(new String[]{"add repo", "clone D:\\IT\\ООП\\практика\\Репозиторий\\tests\\local repo", "commit", "commit"});
             RepoClient client1 = new RepoClient();
-            client.start(port, ipAddress);
+            //client.start(port, ipAddress);
             client1.start(port, ipAddress);
+            //client1.start(port, ipAddress);
         } catch (Exception e) {
 
         }

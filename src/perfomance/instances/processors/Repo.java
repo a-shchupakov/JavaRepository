@@ -46,9 +46,6 @@ public class Repo implements ICommandProcessor {
         this.versionIncrement = versionIncrement;
         this.manager = manager;
         this.encryptor = encryptor;
-        versionMapPaths = new HashMap<>();
-        versionContent = new HashMap<>();
-        prevVersionMapNames = new HashMap<>();
         currentVersion = "";
         lastVersion = "";
         socketTimeOut = 5000 * 3;
@@ -62,25 +59,27 @@ public class Repo implements ICommandProcessor {
             return new ResponsePacket(VersionControl.SUCCESS, "Ok");
         }
 
-        if (dataProvider.getOrigin() == null){
-            // Hе можем обработать команды, кроме clone и add.
-            if (command instanceof CreateCommand){
-                response = processCreateCommand(command);
+        if (command instanceof CreateCommand)
+            return processCreateCommand(command);
+        else if (command instanceof CloneCommand){
+            String name = ((CloneCommand) command).getToClone();
+            String pathToRepo = versionControl.getPathToRepo(name);
+            if (pathToRepo == null)
+                return new ResponsePacket(VersionControl.NO_SUCH_REPO_ERROR, "No such repo " + name);
+            else {
+                versionMapPaths = versionControl.getVersionMapPaths(name);
+                versionContent = versionControl.getVersionContent(name);
+                prevVersionMapNames = versionControl.getPrevVersionMapNames(name);
+                currentVersion = versionControl.getLastVersion(name);
+                lastVersion = currentVersion;
+                response = cloneDirectory(name);
+                dataProvider.setOrigin(pathToRepo);
+                currentRepoName = name;
+                return response;
             }
-            else if (command instanceof CloneCommand){
-                String name = ((CloneCommand) command).getToClone();
-                String pathToRepo = versionControl.getPathToRepo(name);
-                if (pathToRepo == null)
-                    response = new ResponsePacket(VersionControl.NO_SUCH_REPO_ERROR, "No such repo " + name);
-                else {
-                    response = cloneDirectory(name);
-                    dataProvider.setOrigin(pathToRepo);
-                    currentRepoName = name;
-                }
-            }
-            else
-                response = new ResponsePacket(VersionControl.NO_REPO_SELECTED_ERROR, "Clone repo first");
         }
+        if (dataProvider.getOrigin() == null) // Hе можем обработать команды, кроме clone и add.
+            return new ResponsePacket(VersionControl.NO_REPO_SELECTED_ERROR, "Clone repo first");
         else {
             if (command instanceof CommitCommand){
                 response = processCommitCommand((CommitCommand) command);
@@ -91,9 +90,8 @@ public class Repo implements ICommandProcessor {
             else if (command instanceof Md5Command){
                 response = processMd5Command((Md5Command) command);
             }
+            return response;
         }
-
-        return response;
     }
 
     private ICommandPacket processMd5Command(Md5Command command){
@@ -231,7 +229,6 @@ public class Repo implements ICommandProcessor {
 
     private ICommandPacket processCommitCommand(CommitCommand command){
         String newVersion = (lastVersion.isEmpty()) ? versionIncrement.getFirst() : versionIncrement.increment(lastVersion);
-        System.out.println("New version on server " + newVersion);
         Pair<ICommandPacket, ServerSocket> packetAndSocket;
         try {
             packetAndSocket = createSocket("write");
@@ -267,6 +264,7 @@ public class Repo implements ICommandProcessor {
                 lastVersion = newVersion;
                 versionContent.put(newVersion, command.getFiles());
 
+                System.out.println("New version on server " + newVersion);
                 System.out.println("Contents:");
                 for (Map.Entry<String, String[]> entry: versionContent.entrySet()){
                     System.out.println(entry.getKey() + ": " + Arrays.toString(entry.getValue()));
@@ -276,7 +274,7 @@ public class Repo implements ICommandProcessor {
                 System.out.println("Commit succeeded");
             }
             return (success)
-                    ? new ResponsePacket(VersionControl.SUCCESS, "Commit was pushed to " + currentVersion + "version" )
+                    ? new ResponsePacket(VersionControl.SUCCESS, "Commit was pushed to " + currentVersion + " version" )
                     : new ResponsePacket(VersionControl.WRITE_ERROR, "Cannot save file");
         }
         catch (SocketTimeoutException e){

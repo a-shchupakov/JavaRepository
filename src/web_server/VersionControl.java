@@ -10,6 +10,10 @@ public class VersionControl {
     private final IDataProvider dataProvider;
     private Map<String, String> repositories;
     private Map<String, String> repoLastVersion;
+
+    private Map<String, Map<String, String>> repoVersionMapPaths; // Repo -> (Available version -> Path to version)
+    private Map<String, Map<String, String[]>> repoVersionContent; // Repo -> (Available version -> Version content)
+    private Map<String, Map<String, String>> repoPrevVersionMapNames; // Repo -> (Available version -> Previous version)
     public static int SOCKET_ERROR;
     public static int TRANSPORT_ERROR;
     public static int WRITE_ERROR;
@@ -39,12 +43,31 @@ public class VersionControl {
         this.repoDirectory = repoDirectory;
         this.dataProvider = dataProvider;
         dataProvider.setCurrentRoot(repoDirectory);
+        dataProvider.clearDirectory(repoDirectory);
         repositories = new HashMap<>();
         repoLastVersion = new HashMap<>();
+        repoVersionMapPaths = new HashMap<>();
+        repoVersionContent = new HashMap<>();
+        repoPrevVersionMapNames = new HashMap<>();
     }
 
     public String getRepoDirectory() {
         return repoDirectory;
+    }
+
+    public Map<String, String> getPrevVersionMapNames(String repo) {
+        repoPrevVersionMapNames.putIfAbsent(repo, new HashMap<>());
+        return repoPrevVersionMapNames.get(repo);
+    }
+
+    public Map<String, String> getVersionMapPaths(String repo) {
+        repoVersionMapPaths.putIfAbsent(repo, new HashMap<>());
+        return repoVersionMapPaths.get(repo);
+    }
+
+    public Map<String, String[]> getVersionContent(String repo) {
+        repoVersionContent.putIfAbsent(repo, new HashMap<>());
+        return repoVersionContent.get(repo);
     }
 
     public void createRepo(String name){
@@ -58,6 +81,7 @@ public class VersionControl {
     }
 
     public String getLastVersion(String repoName){
+        repoLastVersion.putIfAbsent(repoName, "");
         return repoLastVersion.get(repoName);
     }
 

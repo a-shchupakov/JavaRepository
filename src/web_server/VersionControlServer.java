@@ -22,8 +22,12 @@ public class VersionControlServer extends WebServer {
     private ThreadDispatcher threadDispatcher;
     private VersionControl versionControl;
     private static int[] portPull;
+    private static final int fromPort;
+    private static final int toPort;
     static {
-        portPull = new int[] {12345, 23456, 54422, 32456, 42376, 55867, 44333, 33444 };
+        fromPort = 49152;
+        toPort = 65535;
+        portPull = new int[] {55557};
     }
 
     public VersionControlServer(int port, IDataProvider dataProvider, String repoDirectory){
