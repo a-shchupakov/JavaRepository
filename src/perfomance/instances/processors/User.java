@@ -248,6 +248,7 @@ public class User implements ICommandProcessor {
     }
 
     private ICommandPacket sendUpdatePacket(String[] command){
+        tempHard = true;
         return new RevertPacket("", true);
     }
 
