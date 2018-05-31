@@ -17,7 +17,6 @@ import utils.data.IDataProvider;
 import utils.data.TransporterException;
 import utils.encrypt.IEncryptor;
 import web_server.VersionControl;
-import web_server.VersionControlServer;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -38,6 +37,7 @@ public class Repo implements ICommandProcessor {
     private Map<String, String[]> versionContent;
     private Map<String, String> prevVersionMapNames;
     private int socketTimeOut;
+    private int socketPort;
     private IEncryptor encryptor;
 
     public Repo(Manager manager, VersionControl versionControl, IDataProvider dataProvider, IVersionIncrement versionIncrement, IEncryptor encryptor){
@@ -71,6 +71,7 @@ public class Repo implements ICommandProcessor {
                 versionContent = versionControl.getVersionContent(name);
                 prevVersionMapNames = versionControl.getPrevVersionMapNames(name);
                 currentVersion = versionControl.getLastVersion(name);
+                socketPort = versionControl.getRepoPort(name);
                 lastVersion = currentVersion;
                 response = cloneDirectory(name);
                 dataProvider.setOrigin(pathToRepo);
@@ -321,7 +322,9 @@ public class Repo implements ICommandProcessor {
     private Pair<ICommandPacket, ServerSocket> createSocket(String type) throws IOException {
         ICommandPacket response;
         ServerSocket dataSocket;
-        dataSocket = VersionControlServer.createSocket();
+        if (socketPort == -1)
+            throw new IOException("No port available");
+        dataSocket = new ServerSocket(socketPort);
         response = new SocketPacket(dataSocket.getLocalPort(), type);
         return new Pair<>(response, dataSocket);
     }

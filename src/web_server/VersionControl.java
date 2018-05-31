@@ -14,6 +14,7 @@ public class VersionControl {
     private Map<String, Map<String, String>> repoVersionMapPaths; // Repo -> (Available version -> Path to version)
     private Map<String, Map<String, String[]>> repoVersionContent; // Repo -> (Available version -> Version content)
     private Map<String, Map<String, String>> repoPrevVersionMapNames; // Repo -> (Available version -> Previous version)
+    private Map<String, Integer> repoPortMap; // Repo -> Free port to connect to
     public static int SOCKET_ERROR;
     public static int TRANSPORT_ERROR;
     public static int WRITE_ERROR;
@@ -49,10 +50,16 @@ public class VersionControl {
         repoVersionMapPaths = new HashMap<>();
         repoVersionContent = new HashMap<>();
         repoPrevVersionMapNames = new HashMap<>();
+        repoPortMap = new HashMap<>();
     }
 
     public String getRepoDirectory() {
         return repoDirectory;
+    }
+
+    public int getRepoPort(String repo){
+        repoPortMap.putIfAbsent(repo, VersionControlServer.getUnusedFreePort());
+        return repoPortMap.get(repo);
     }
 
     public Map<String, String> getPrevVersionMapNames(String repo) {

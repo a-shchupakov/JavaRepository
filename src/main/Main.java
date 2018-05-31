@@ -24,11 +24,13 @@ public class Main {
                 }
             }).start();
 
-            TempRepoUser client = new TempRepoUser(new String[]{"add repo", "clone D:\\IT\\ООП\\практика\\Репозиторий\\tests\\local repo", "commit", "commit"});
-            RepoClient client1 = new RepoClient();
-            //client.start(port, ipAddress);
-            client1.start(port, ipAddress);
-            //client1.start(port, ipAddress);
+            TempRepoUser autoClient = new TempRepoUser(new String[]{"add repo", "clone D:\\IT\\ООП\\практика\\Репозиторий\\tests\\local repo", "commit"});
+            RepoClient manualClient = new RepoClient();
+
+            new Thread(() -> autoClient.start(port, ipAddress)).start();
+            new Thread(() -> autoClient.start(port, ipAddress)).start();
+
+            //manualClient.start(port, ipAddress);
         } catch (Exception e) {
 
         }

@@ -17,17 +17,19 @@ import utils.serializers.Serializer;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashSet;
+import java.util.Set;
 
 public class VersionControlServer extends WebServer {
     private ThreadDispatcher threadDispatcher;
     private VersionControl versionControl;
-    private static int[] portPull;
     private static final int fromPort;
     private static final int toPort;
+    private static final Set<Integer> usedPorts;
     static {
         fromPort = 49152;
         toPort = 65535;
-        portPull = new int[] {55557};
+        usedPorts = new HashSet<>();
     }
 
     public VersionControlServer(int port, IDataProvider dataProvider, String repoDirectory){
@@ -60,16 +62,27 @@ public class VersionControlServer extends WebServer {
         }
     }
 
-    public static ServerSocket createSocket() throws IOException{
-        for (int port : portPull) {
+    private static ServerSocket createSocket(int port) throws IOException{
+        return new ServerSocket(port);
+    }
+
+    static Integer getUnusedFreePort(){
+        ServerSocket socket = null;
+        for (int i = fromPort; i < toPort; i++){
             try {
-                return new ServerSocket(port);
-            } catch (IOException ex) {
-                continue; // try next port
+                socket = createSocket(i);
+                if (usedPorts.contains(i))
+                    continue;
+                usedPorts.add(i);
+                return i;
+            } catch (IOException e) {
+                continue;
+            }
+            finally {
+                closeStream(socket);
             }
         }
-
-        throw new IOException("No free port available");
+        return -1;
     }
 
     static class ClientServant implements Runnable {
