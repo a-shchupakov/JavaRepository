@@ -59,10 +59,15 @@ public class NetDataTransporter implements IDataTransporter {
         int count;
         byte[] buffer = new byte[byteCount];
         count = reader.read(buffer); // TODO: возможно придется считывать несколько раз (read - блокирующий)
-        tempStream.write(buffer, 0, count);
-        byte[] bytes = tempStream.toByteArray();
-        closeStream(tempStream);
-        return bytes;
+        if (count > 0) {
+            tempStream.write(buffer, 0, count);
+            byte[] bytes = tempStream.toByteArray();
+            closeStream(tempStream);
+            return bytes;
+        }
+        else
+            closeStream(tempStream);
+        return new byte[0];
     }
 
     private void write(byte[] bytes) throws IOException{

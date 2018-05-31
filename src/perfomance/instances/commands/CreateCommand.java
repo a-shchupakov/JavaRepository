@@ -1,8 +1,8 @@
 package perfomance.instances.commands;
 
-import utils.data.EmptyDataProvider;
+import perfomance.ICommand;
 
-public class CreateCommand extends DataCommand{
+public class CreateCommand implements ICommand {
     private final String toCreate;
 
     public CreateCommand(String names){
@@ -11,9 +11,7 @@ public class CreateCommand extends DataCommand{
 
     @Override
     public void execute() {
-        if (dataProvider == null)
-            dataProvider = EmptyDataProvider.INSTANCE;
-        dataProvider.createDirectory(toCreate);
+
     }
 
     public String getToCreate(){

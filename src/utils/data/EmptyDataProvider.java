@@ -1,5 +1,10 @@
 package utils.data;
 
+import javafx.util.Pair;
+
+import java.io.IOException;
+import java.util.List;
+
 public class EmptyDataProvider implements IDataProvider {
     public static final EmptyDataProvider INSTANCE = new EmptyDataProvider();
 
@@ -45,6 +50,16 @@ public class EmptyDataProvider implements IDataProvider {
 
     @Override
     public void setOrigin(String origin) {
+
+    }
+
+    @Override
+    public List<Pair<String, byte[]>> walkThrough(String dir) throws IOException {
+        return null;
+    }
+
+    @Override
+    public void clearDirectory(String dir) {
 
     }
 }

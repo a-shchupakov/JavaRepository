@@ -11,16 +11,70 @@ public class VersionControl {
     private Map<String, String> repositories;
     private Map<String, String> repoLastVersion;
 
+    private Map<String, Map<String, String>> repoVersionMapPaths; // Repo -> (Available version -> Path to version)
+    private Map<String, Map<String, String[]>> repoVersionContent; // Repo -> (Available version -> Version content)
+    private Map<String, Map<String, String>> repoPrevVersionMapNames; // Repo -> (Available version -> Previous version)
+    private Map<String, Integer> repoPortMap; // Repo -> Free port to connect to
+    public static int SOCKET_ERROR;
+    public static int TRANSPORT_ERROR;
+    public static int WRITE_ERROR;
+    public static int SUCCESS;
+    public static int NO_SUCH_VERSION_ERROR;
+    public static int UNKNOWN_ERROR;
+    public static int CONNECTION_ERROR;
+    public static int NO_SUCH_REPO_ERROR;
+    public static int NO_REPO_SELECTED_ERROR;
+    public static int COMMAND_NOT_ALLOWED;
+
+
+    static {
+        SOCKET_ERROR = 401;
+        TRANSPORT_ERROR = 402;
+        WRITE_ERROR = 403;
+        NO_SUCH_VERSION_ERROR = 405;
+        NO_SUCH_REPO_ERROR = 404;
+        NO_REPO_SELECTED_ERROR = 406;
+        SUCCESS = 200;
+        UNKNOWN_ERROR = 444;
+        CONNECTION_ERROR = 522;
+        COMMAND_NOT_ALLOWED = 433;
+    }
+
     public VersionControl(IDataProvider dataProvider, String repoDirectory){
         this.repoDirectory = repoDirectory;
         this.dataProvider = dataProvider;
         dataProvider.setCurrentRoot(repoDirectory);
+        dataProvider.clearDirectory(repoDirectory);
         repositories = new HashMap<>();
         repoLastVersion = new HashMap<>();
+        repoVersionMapPaths = new HashMap<>();
+        repoVersionContent = new HashMap<>();
+        repoPrevVersionMapNames = new HashMap<>();
+        repoPortMap = new HashMap<>();
     }
 
     public String getRepoDirectory() {
         return repoDirectory;
+    }
+
+    public int getRepoPort(String repo){
+        repoPortMap.putIfAbsent(repo, VersionControlServer.getUnusedFreePort());
+        return repoPortMap.get(repo);
+    }
+
+    public Map<String, String> getPrevVersionMapNames(String repo) {
+        repoPrevVersionMapNames.putIfAbsent(repo, new HashMap<>());
+        return repoPrevVersionMapNames.get(repo);
+    }
+
+    public Map<String, String> getVersionMapPaths(String repo) {
+        repoVersionMapPaths.putIfAbsent(repo, new HashMap<>());
+        return repoVersionMapPaths.get(repo);
+    }
+
+    public Map<String, String[]> getVersionContent(String repo) {
+        repoVersionContent.putIfAbsent(repo, new HashMap<>());
+        return repoVersionContent.get(repo);
     }
 
     public void createRepo(String name){
@@ -34,6 +88,7 @@ public class VersionControl {
     }
 
     public String getLastVersion(String repoName){
+        repoLastVersion.putIfAbsent(repoName, "");
         return repoLastVersion.get(repoName);
     }
 

@@ -14,11 +14,6 @@ public class Manager {
     private final CommandFactory factory;
     private final IDataTransporter dataTransporter;
 
-    private Manager(){
-        factory = null;
-        dataTransporter = null;
-    }
-
     public Manager(ISerializer serializer, IDataTransporter dataTransporter, CommandFactory factory){
         this.serializer = serializer;
         this.factory = factory;
@@ -29,28 +24,14 @@ public class Manager {
         this.commandProcessor = commandProcessor;
     }
 
-    public ICommandProcessor getCommandProcessor() {
-        return commandProcessor;
-    }
-
-    private void sendToAnotherManager(ICommandPacket packet) throws TransporterException {
-        byte[] serializedData = serializer.serialize(packet);
-        dataTransporter.send(serializedData);
-    }
-
-    public ICommandPacket getFromAnotherManager() throws TransporterException{
+    public ICommand getCommand() throws TransporterException{
         byte[] serializedData = dataTransporter.get();
         ICommandPacket packet = (ICommandPacket) serializer.deserialize(serializedData);
-        ICommand command = factory.createCommand(packet);
-        ICommandPacket response = sendToProcessor(command);
-        return response;
+        return factory.createCommand(packet);
     }
 
-    public void sendToAnotherProcessor(ICommandPacket packet) throws TransporterException {
-        sendToAnotherManager(packet);
-    }
-
-    private ICommandPacket sendToProcessor(ICommand command){
-        return commandProcessor.process(command);
+    public void sendPacket(ICommandPacket packet) throws TransporterException {
+        byte[] serializedData = serializer.serialize(packet);
+        dataTransporter.send(serializedData);
     }
 }
