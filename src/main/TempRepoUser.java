@@ -42,7 +42,6 @@ public class TempRepoUser {
             User user = new User(manager, new FolderProvider(), address, encryptor, System.out);
             manager.setCommandProcessor(user);
 
-            BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in));
             for (String command: commands) {
                 String message = command;
                 if (message.startsWith("commit")){
