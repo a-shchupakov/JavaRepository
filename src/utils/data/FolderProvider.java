@@ -127,7 +127,12 @@ public class FolderProvider implements IDataProvider {
 
     private void purgeDirectory(File dir) {
         for (File file: dir.listFiles()) {
-            if (file.isDirectory()) purgeDirectory(file);
+            if (file.isDirectory()) {
+                purgeDirectory(file);
+                try {
+                    Files.delete(file.toPath());
+                } catch (IOException e) { }
+            }
             file.delete();
         }
     }

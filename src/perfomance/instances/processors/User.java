@@ -134,31 +134,53 @@ public class User implements ICommandProcessor {
         }
     }
 
+    private boolean isValid(String[] command){
+        try {
+            if ("add".equals(command[0])) {
+                return !command[1].isEmpty() && command.length == 2;
+            } else if ("clone".equals(command[0])) {
+                if (command.length == 3) {
+                    return !command[1].isEmpty() && !command[2].isEmpty();
+                } else if (command.length == 4) {
+                    return !command[1].isEmpty() && !command[2].isEmpty() && ".".equals(command[3]);
+                }
+            } else if ("update".equals(command[0]) || "commit".equals(command[0]) || "log".equals(command[0])) {
+                return command.length == 1;
+            } else if ("revert".equals(command[0])) {
+                if (command.length == 2) {
+                    return !command[1].isEmpty();
+                } else if (command.length == 3) {
+                    return !command[1].isEmpty() && "-hard".equals(command[2]);
+                }
+            }
+        }
+        catch (IndexOutOfBoundsException e){
+            return false;
+        }
+        return false;
+    }
+
     @Override
     public void sendPacket(String identifier) {
         String[] command = identifier.split(" "); // TODO: check command for correctness
         ICommandPacket packet = null;
-        if (identifier.startsWith("xor")){
-            encryptor.setSecret(command[1]);
-            packet = sendEncryptPacket(command);
-        }
-        else if (identifier.toLowerCase().startsWith("add")){
-            packet = sendAddPacket(command);
-        }
-        else if (identifier.toLowerCase().startsWith("clone")){
-            packet = sendClonePacket(command);
-        }
-        else if (identifier.toLowerCase().startsWith("update")){
-            packet = sendUpdatePacket(command);
-        }
-        else if (identifier.toLowerCase().startsWith("commit")){
-            packet = sendCommitPacket(command);
-        }
-        else if (identifier.toLowerCase().startsWith("revert")){
-            packet = sendRevertPacket(command);
-        }
-        else if (identifier.toLowerCase().startsWith("log")){
-            packet = sendLogPacket(command);
+        if (isValid(command)) {
+            if (identifier.startsWith("xor")) {
+                encryptor.setSecret(command[1]);
+                packet = sendEncryptPacket(command);
+            } else if (identifier.toLowerCase().startsWith("add")) {
+                packet = sendAddPacket(command);
+            } else if (identifier.toLowerCase().startsWith("clone")) {
+                packet = sendClonePacket(command);
+            } else if (identifier.toLowerCase().startsWith("update")) {
+                packet = sendUpdatePacket(command);
+            } else if (identifier.toLowerCase().startsWith("commit")) {
+                packet = sendCommitPacket(command);
+            } else if (identifier.toLowerCase().startsWith("revert")) {
+                packet = sendRevertPacket(command);
+            } else if (identifier.toLowerCase().startsWith("log")) {
+                packet = sendLogPacket(command);
+            }
         }
         try {
             if (packet == null)
@@ -176,10 +198,7 @@ public class User implements ICommandProcessor {
     private ICommandPacket sendClonePacket(String[] command){
         boolean straight = false;
         if (command.length == 4) {
-            if (command[3].equals("."))
-                straight = true;
-            else
-                return null;
+            straight = true;
         }
         String path = command[1];
         String name = command[2];
@@ -294,6 +313,7 @@ public class User implements ICommandProcessor {
     public ICommand get() throws TransporterException {
         return manager.getCommand();
     }
+
     private static void close(Closeable closeable){
         try {
             if (closeable != null)
