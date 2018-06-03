@@ -58,7 +58,7 @@ public class NetDataTransporter implements IDataTransporter {
         tempStream = new ByteArrayOutputStream();
         int count;
         byte[] buffer = new byte[byteCount];
-        count = reader.read(buffer); // TODO: возможно придется считывать несколько раз (read - блокирующий)
+        count = reader.read(buffer);
         if (count > 0) {
             tempStream.write(buffer, 0, count);
             byte[] bytes = tempStream.toByteArray();

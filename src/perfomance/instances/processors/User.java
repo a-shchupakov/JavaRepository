@@ -139,7 +139,7 @@ public class User implements ICommandProcessor {
         String[] command = identifier.split(" "); // TODO: check command for correctness
         ICommandPacket packet = null;
         if (identifier.startsWith("xor")){
-            encryptor.setSecret(command[1]);// TODO: server doesn't know
+            encryptor.setSecret(command[1]);
             packet = sendEncryptPacket(command);
         }
         else if (identifier.toLowerCase().startsWith("add")){

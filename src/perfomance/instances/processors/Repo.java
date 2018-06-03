@@ -101,14 +101,14 @@ public class Repo implements ICommandProcessor {
         }
     }
 
-    private boolean compareFiles(String file1, String file2){
+    private boolean isSameFiles(String file1, String file2){
         byte[] hash1, hash2;
         try {
             hash1 = Md5Hash.getMd5Hash(dataProvider.read(file1));
             hash2 = Md5Hash.getMd5Hash(dataProvider.read(file2));
         }
         catch (IOException e){
-            return false;
+            return true;
         }
         return (Arrays.equals(hash1, hash2));
     }
@@ -122,7 +122,7 @@ public class Repo implements ICommandProcessor {
         String pathToCurrent = dataProvider.resolve(dataProvider.getOrigin(), versionMapPaths.get(version));
         for (String fileName: fileNames){
             if (prevVersionContent.contains(fileName)) {
-                if (compareFiles(dataProvider.resolve(pathToPrev, fileName), dataProvider.resolve(pathToCurrent, fileName)))
+                if (!isSameFiles(dataProvider.resolve(pathToPrev, fileName), dataProvider.resolve(pathToCurrent, fileName)))
                     sb.append("\t").append("^ ").append(fileName).append("\r\n");
             }
             else

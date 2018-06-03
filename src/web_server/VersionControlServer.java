@@ -123,11 +123,7 @@ public class VersionControlServer extends WebServer {
                     m_socket.close();
                 }
             }
-            catch (Exception ex)
-            {
-                System.err.println("client terminated with error: {1}" + ex); //TODO: del it
-                ex.printStackTrace();
-            }
+            catch (Exception ex) { }
         }
     }
 }
