@@ -28,12 +28,14 @@ public class User implements ICommandProcessor {
     private boolean tempHard;
     private InetAddress address;
     private IEncryptor encryptor;
+    private final PrintStream printStream;
 
-    public User(Manager manager, IDataProvider dataProvider, InetAddress address, IEncryptor encryptor){
+    public User(Manager manager, IDataProvider dataProvider, InetAddress address, IEncryptor encryptor, PrintStream printStream) {
         this.manager = manager;
         this.dataProvider = dataProvider;
         this.address = address;
         this.encryptor = encryptor;
+        this.printStream = printStream;
     }
 
     @Override
@@ -80,6 +82,7 @@ public class User implements ICommandProcessor {
                 if (tempBytesToSend != null)
                     output.write(encryptor.encrypt(tempBytesToSend));
                 tempBytesToSend = null;
+                printStream.println("Sending files...");
             } else if ("read".equals(command)) {
                 inputStream = socket.getInputStream();
                 tempStream = new ByteArrayOutputStream();
@@ -89,7 +92,19 @@ public class User implements ICommandProcessor {
                 tempStream.write(buffer, 0, count);
                 byte[] bytes = tempStream.toByteArray();
 
+                printStream.println("Getting files");
                 writeBytes(bytes);
+            }
+            else if ("notify".equals(command)){
+                inputStream = socket.getInputStream();
+                tempStream = new ByteArrayOutputStream();
+                int count;
+                byte[] buffer = new byte[4096];
+                count = inputStream.read(buffer);
+                tempStream.write(buffer, 0, count);
+                byte[] bytes = tempStream.toByteArray();
+
+                printStream.print(new String(Zipper.unzipOne(encryptor.decrypt(bytes)), "UTF-8"));
             }
         }
         catch (IOException e){
@@ -107,6 +122,7 @@ public class User implements ICommandProcessor {
 
     private void writeBytes(byte[] bytes){
         try {
+            printStream.println("Saving files");
             if (tempHard)
                 dataProvider.clearDirectory(dataProvider.getOrigin());
             List<Pair<String, byte[]>> files = Zipper.unzipMultiple(encryptor.decrypt(bytes));
@@ -262,7 +278,7 @@ public class User implements ICommandProcessor {
     }
 
     private ICommandPacket sendLogPacket(String[] command){
-        return null;
+        return new LogPacket("query");
     }
 
     private ICommandPacket sendEncryptPacket(String[] command){

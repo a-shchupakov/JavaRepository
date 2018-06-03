@@ -4,6 +4,7 @@ import javafx.util.Pair;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -113,6 +114,15 @@ public class FolderProvider implements IDataProvider {
             }
         }
         purgeDirectory(directoryFile);
+    }
+
+    @Override
+    public void append(String name, byte[] bytes) throws IOException {
+        Path pathToFile = path.resolve(name);
+        if (!pathToFile.toFile().exists()){
+            new File(pathToFile.getParent().toString()).mkdirs();
+        }
+        Files.write(pathToFile, bytes, Files.exists(pathToFile) ? StandardOpenOption.APPEND : StandardOpenOption.CREATE);
     }
 
     private void purgeDirectory(File dir) {

@@ -15,6 +15,8 @@ public class VersionControl {
     private Map<String, Map<String, String[]>> repoVersionContent; // Repo -> (Available version -> Version content)
     private Map<String, Map<String, String>> repoPrevVersionMapNames; // Repo -> (Available version -> Previous version)
     private Map<String, Integer> repoPortMap; // Repo -> Free port to connect to
+    private Map<String, String> repoLogFileMap;
+    public static String LOG_FILE_NAME;
     public static int SOCKET_ERROR;
     public static int TRANSPORT_ERROR;
     public static int WRITE_ERROR;
@@ -25,9 +27,11 @@ public class VersionControl {
     public static int NO_SUCH_REPO_ERROR;
     public static int NO_REPO_SELECTED_ERROR;
     public static int COMMAND_NOT_ALLOWED;
+    public static int CANNOT_SAVE_LOG;
 
 
     static {
+        LOG_FILE_NAME = "log.txt";
         SOCKET_ERROR = 401;
         TRANSPORT_ERROR = 402;
         WRITE_ERROR = 403;
@@ -38,6 +42,7 @@ public class VersionControl {
         UNKNOWN_ERROR = 444;
         CONNECTION_ERROR = 522;
         COMMAND_NOT_ALLOWED = 433;
+        CANNOT_SAVE_LOG = 412;
     }
 
     public VersionControl(IDataProvider dataProvider, String repoDirectory){
@@ -51,10 +56,16 @@ public class VersionControl {
         repoVersionContent = new HashMap<>();
         repoPrevVersionMapNames = new HashMap<>();
         repoPortMap = new HashMap<>();
+        repoLogFileMap = new HashMap<>();
     }
 
     public String getRepoDirectory() {
         return repoDirectory;
+    }
+
+    public String getRepoLogFile(String repo){
+        repoLogFileMap.computeIfAbsent(repo, repoName -> dataProvider.resolve(repositories.get(repoName), LOG_FILE_NAME));
+        return repoLogFileMap.get(repo);
     }
 
     public int getRepoPort(String repo){
@@ -73,7 +84,11 @@ public class VersionControl {
     }
 
     public Map<String, String[]> getVersionContent(String repo) {
-        repoVersionContent.putIfAbsent(repo, new HashMap<>());
+        repoVersionContent.computeIfAbsent(repo, repoName -> {
+           Map<String, String[]> tempMap = new HashMap<>();
+           tempMap.put("", new String[0]);
+           return tempMap;
+        });
         return repoVersionContent.get(repo);
     }
 

@@ -22,10 +22,12 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
-
+@SuppressWarnings("Duplicates")
 public class Repo implements ICommandProcessor {
+    private final String userIdentifier;
     private final Manager manager;
     private final VersionControl versionControl;
     private IDataProvider dataProvider;
@@ -40,7 +42,8 @@ public class Repo implements ICommandProcessor {
     private int socketPort;
     private IEncryptor encryptor;
 
-    public Repo(Manager manager, VersionControl versionControl, IDataProvider dataProvider, IVersionIncrement versionIncrement, IEncryptor encryptor){
+    public Repo(String usedIdentifier, Manager manager, VersionControl versionControl, IDataProvider dataProvider, IVersionIncrement versionIncrement, IEncryptor encryptor){
+        this.userIdentifier = usedIdentifier;
         this.versionControl = versionControl;
         this.dataProvider = dataProvider;
         this.versionIncrement = versionIncrement;
@@ -91,7 +94,110 @@ public class Repo implements ICommandProcessor {
             else if (command instanceof Md5Command){
                 response = processMd5Command((Md5Command) command);
             }
+            else if (command instanceof LogCommand){
+                response = processLogCommand((LogCommand) command);
+            }
             return response;
+        }
+    }
+
+    private boolean compareFiles(String file1, String file2){
+        byte[] hash1, hash2;
+        try {
+            hash1 = Md5Hash.getMd5Hash(dataProvider.read(file1));
+            hash2 = Md5Hash.getMd5Hash(dataProvider.read(file2));
+        }
+        catch (IOException e){
+            return false;
+        }
+        return (Arrays.equals(hash1, hash2));
+    }
+
+    private StringBuilder getFormattedFileNames(String version, String[] fileNames, StringBuilder sb){
+        String prevVersion = prevVersionMapNames.get(version);
+        Set<String> prevVersionContent = new HashSet<>(Arrays.asList(versionContent.get(prevVersion)));
+        Set<String> currentVersionContent = new HashSet<>(Arrays.asList(fileNames));
+
+        String pathToPrev = (prevVersion.isEmpty()) ? null : dataProvider.resolve(dataProvider.getOrigin(), versionMapPaths.get(prevVersion));
+        String pathToCurrent = dataProvider.resolve(dataProvider.getOrigin(), versionMapPaths.get(version));
+        for (String fileName: fileNames){
+            if (prevVersionContent.contains(fileName)) {
+                if (compareFiles(dataProvider.resolve(pathToPrev, fileName), dataProvider.resolve(pathToCurrent, fileName)))
+                    sb.append("\t").append("^ ").append(fileName).append("\r\n");
+            }
+            else
+                sb.append("\t").append("+ ").append(fileName).append("\r\n");
+        }
+
+        for (String name: prevVersionContent){
+            if (!currentVersionContent.contains(name))
+                sb.append("\t").append("- ").append(name).append("\r\n");
+        }
+        return sb;
+    }
+
+    private ICommandPacket updateLog(String version, String[] files){
+        String pathToLog = versionControl.getRepoLogFile(currentRepoName);
+        String date = new SimpleDateFormat("dd-MM-yyyy HH:mm").format(new Date());
+        StringBuilder sb = new StringBuilder();
+        sb.append(userIdentifier).append(" commits following changes at ").append(date).append(" (version ").append(version).append("):\r\n");
+        sb = getFormattedFileNames(version, files, sb);
+        sb.append("\r\n");
+        byte[] log = sb.toString().getBytes();
+        try {
+            dataProvider.append(pathToLog, log);
+        } catch (IOException e) {
+            return new ResponsePacket(VersionControl.CANNOT_SAVE_LOG, "Can not update log file");
+        }
+        return new ResponsePacket(VersionControl.SUCCESS, "Ok");
+    }
+
+    private ICommandPacket sendToSocket( Pair<ICommandPacket, ServerSocket> packetAndSocket, byte[] bytes){
+        ServerSocket serverSocket = packetAndSocket.getValue();
+        OutputStream os = null;
+        Socket dataSocket = null;
+        try {
+            send(packetAndSocket.getKey());
+        }
+        catch (TransporterException e){
+            close(serverSocket);
+            return new ResponsePacket(VersionControl.TRANSPORT_ERROR, "Cannot send port to connect to");
+        }
+        try {
+            serverSocket.setSoTimeout(socketTimeOut);
+            dataSocket = serverSocket.accept();
+            os = dataSocket.getOutputStream();
+            os.write(bytes);
+            return new ResponsePacket(VersionControl.SUCCESS, "Ok");
+        }
+        catch (SocketTimeoutException e){
+            return new ResponsePacket(VersionControl.CONNECTION_ERROR, "No connection was accepted");
+        }
+        catch (IOException e){
+            return new ResponsePacket(VersionControl.CONNECTION_ERROR, "Unknown error occurred");
+        }
+        finally {
+            close(serverSocket);
+            close(dataSocket);
+            close(os);
+        }
+    }
+
+    private ICommandPacket processLogCommand(LogCommand command){
+        if (!"query".equals(command.getType()))
+            return new ResponsePacket(VersionControl.COMMAND_NOT_ALLOWED, "Unsupported command");
+        Pair<ICommandPacket, ServerSocket> packetAndSocket;
+        try {
+            packetAndSocket = createSocket("notify");
+        } catch (IOException e) {
+            return new ResponsePacket(VersionControl.SOCKET_ERROR, "Server is busy, try later");
+        }
+
+        try {
+            byte[] logBytes = dataProvider.read(versionControl.getRepoLogFile(currentRepoName));
+            return sendToSocket(packetAndSocket, encryptor.encrypt(Zipper.zipOne(logBytes, "")));
+        } catch (IOException e) {
+            return new ResponsePacket(VersionControl.UNKNOWN_ERROR, "Unknown error occurred");
         }
     }
 
@@ -152,46 +258,19 @@ public class Repo implements ICommandProcessor {
             return new ResponsePacket(VersionControl.SOCKET_ERROR, "Server is busy, try later");
         }
 
-        ServerSocket serverSocket = packetAndSocket.getValue();
-        OutputStream os = null;
-        Socket dataSocket = null;
+        String[] names = new String[filesToSend.size()];
+        byte[][] contents = new byte[filesToSend.size()][];
+        for (int i = 0; i < filesToSend.size(); i++){
+            Pair<String, byte[]> pair = filesToSend.get(i);
+            names[i] = pair.getKey();
+            contents[i] = pair.getValue();
+        }
+        currentVersion = version;
         try {
-            send(packetAndSocket.getKey());
-        }
-        catch (TransporterException e){
-            try {
-                serverSocket.close();
-            } catch (IOException e1) {
-                e1.printStackTrace();
-                return new ResponsePacket(VersionControl.TRANSPORT_ERROR, "Cannot send port to connect to");
-            }
-        }
-        try {
-            serverSocket.setSoTimeout(socketTimeOut);
-            dataSocket = serverSocket.accept();
-            os = dataSocket.getOutputStream();
-            String[] names = new String[filesToSend.size()];
-            byte[][] contents = new byte[filesToSend.size()][];
-            for (int i = 0; i < filesToSend.size(); i++){
-                Pair<String, byte[]> pair = filesToSend.get(i);
-                names[i] = pair.getKey();
-                contents[i] = pair.getValue();
-            }
-            currentVersion = version;
-            os.write(encryptor.encrypt(Zipper.zipMultiple(names, contents)));
-            return new ResponsePacket(VersionControl.SUCCESS, "Ok");
-        }
-        catch (SocketTimeoutException e){
-            return new ResponsePacket(VersionControl.CONNECTION_ERROR, "No connection was accepted");
-        }
-        catch (IOException e){
-            e.printStackTrace();
-            return new ResponsePacket(VersionControl.CONNECTION_ERROR, "Unknown error occurred");
-        }
-        finally {
-            close(serverSocket);
-            close(dataSocket);
-            close(os);
+            byte[] bytesToSend = encryptor.encrypt(Zipper.zipMultiple(names, contents));
+            return sendToSocket(packetAndSocket, bytesToSend);
+        } catch (IOException e) {
+            return new ResponsePacket(VersionControl.UNKNOWN_ERROR, "Unknown error occurred");
         }
     }
 
@@ -254,10 +333,12 @@ public class Repo implements ICommandProcessor {
         try {
             serverSocket.setSoTimeout(socketTimeOut);
             dataSocket = serverSocket.accept();
+            close(serverSocket);
             is = dataSocket.getInputStream();
             byte[] data = readFromStream(is);
             List<Pair<String, byte[]>> files = Zipper.unzipMultiple(encryptor.decrypt(data));
             boolean success = writeToVersion(newVersion, files);
+            ICommandPacket logPacket = null;
             if (success) {
                 versionControl.updateLastVersion(currentRepoName, newVersion);
                 prevVersionMapNames.put(newVersion, currentVersion);
@@ -273,10 +354,15 @@ public class Repo implements ICommandProcessor {
                 System.out.println(Arrays.toString(versionMapPaths.entrySet().toArray()));
                 System.out.println(Arrays.toString(prevVersionMapNames.entrySet().toArray()));
                 System.out.println("Commit succeeded");
+                logPacket = updateLog(currentVersion, command.getFiles());
             }
-            return (success)
-                    ? new ResponsePacket(VersionControl.SUCCESS, "Commit was pushed to " + currentVersion + " version" )
-                    : new ResponsePacket(VersionControl.WRITE_ERROR, "Cannot save file");
+            if (success){
+                if (((ResponsePacket) logPacket).error == VersionControl.SUCCESS)
+                    return new ResponsePacket(VersionControl.SUCCESS, "Commit was pushed to " + currentVersion + " version" );
+                else
+                    return logPacket;
+            }
+            else return new ResponsePacket(VersionControl.WRITE_ERROR, "Can not save file");
         }
         catch (SocketTimeoutException e){
             return new ResponsePacket(VersionControl.CONNECTION_ERROR, "No connection was accepted");

@@ -30,7 +30,7 @@ public class RepoClient {
             IEncryptor encryptor = new XorEncryptor();
             NetDataTransporter transporter = new NetDataTransporter(encryptor, inputStream, outputStream);
             Manager manager = new Manager(new Serializer(), transporter, factory);
-            User user = new User(manager, new FolderProvider(), address, encryptor);
+            User user = new User(manager, new FolderProvider(), address, encryptor, System.out);
             manager.setCommandProcessor(user);
 
             BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in));

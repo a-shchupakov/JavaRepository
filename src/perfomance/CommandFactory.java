@@ -24,6 +24,8 @@ public class CommandFactory {
             command = new CreateCommand(((CreatePacket) packet).toCreate);
         else if (packet instanceof ClonePacket)
             command = new CloneCommand(((ClonePacket) packet).toClone);
+        else if (packet instanceof LogPacket)
+            command = new LogCommand(((LogPacket) packet).type);
         if (command == null)
             command = EmptyCommand.INSTANCE;
         return command;
