@@ -10,37 +10,26 @@ public class ThreadDispatcher {
         return ourInstance;
     }
 
-    private ThreadMonitor threadMonitor;
     private final Set<ThreadedTask> tasks;
 
     private ThreadDispatcher() {
         this.tasks = new HashSet<>();
-        this.threadMonitor = new ThreadMonitor(50, "D:\\IT\\ООП\\практика\\Tests\\testDispatcher", tasks);
-        add(threadMonitor);
+        add(new ThreadMonitor(50, "D:\\IT\\ООП\\практика\\Tests\\testDispatcher", tasks));
     }
 
     public void add(ThreadedTask task){
-        synchronized (threadMonitor.lock) {
-            synchronized ((Object) threadMonitor.changed) {
-                this.tasks.add(task);
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        task.run();
-                        getInstance().threadStopped(task);
-                    }
-                }).start();
-                threadMonitor.changed = true;
-            }
+        synchronized (tasks) {
+            this.tasks.add(task);
+            new Thread(() -> {
+                task.run();
+                getInstance().threadStopped(task);
+            }).start();
         }
     }
 
     private void threadStopped(ThreadedTask task){
-        synchronized (threadMonitor.lock) {
-            synchronized ((Object) threadMonitor.changed) {
-                this.tasks.remove(task);
-                threadMonitor.changed = true;
-            }
+        synchronized (tasks) {
+            this.tasks.remove(task);
         }
     }
 }
