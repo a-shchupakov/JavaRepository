@@ -14,6 +14,7 @@ import utils.Md5Hash;
 import utils.Zipper;
 import utils.IVersionIncrement;
 import utils.data.IDataProvider;
+import utils.data.IDataTransporter;
 import utils.data.TransporterException;
 import utils.encrypt.IEncryptor;
 import web_server.VersionControl;
@@ -25,12 +26,12 @@ import java.net.SocketTimeoutException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-@SuppressWarnings("Duplicates")
 public class Repo implements ICommandProcessor {
     private final String userIdentifier;
     private final Manager manager;
     private final VersionControl versionControl;
     private IDataProvider dataProvider;
+    private IDataTransporter dataTransporter;
     private IVersionIncrement versionIncrement;
     private String currentVersion;
     private String lastVersion;
@@ -40,15 +41,14 @@ public class Repo implements ICommandProcessor {
     private Map<String, String> prevVersionMapNames;
     private int socketTimeOut;
     private int socketPort;
-    private IEncryptor encryptor;
 
-    public Repo(String usedIdentifier, Manager manager, VersionControl versionControl, IDataProvider dataProvider, IVersionIncrement versionIncrement, IEncryptor encryptor){
+    public Repo(String usedIdentifier, Manager manager, VersionControl versionControl, IDataProvider dataProvider, IDataTransporter dataTransporter, IVersionIncrement versionIncrement){
         this.userIdentifier = usedIdentifier;
         this.versionControl = versionControl;
         this.dataProvider = dataProvider;
+        this.dataTransporter = dataTransporter;
         this.versionIncrement = versionIncrement;
         this.manager = manager;
-        this.encryptor = encryptor;
         currentVersion = "";
         lastVersion = "";
         socketTimeOut = 5000 * 3;
@@ -57,11 +57,6 @@ public class Repo implements ICommandProcessor {
     @Override
     public ICommandPacket process(ICommand command) {
         ICommandPacket response = EmptyPacket.INSTANCE;
-        if (command instanceof EncryptionCommand){
-            encryptor.setSecret(((EncryptionCommand) command).getSecret());
-            return new ResponsePacket(VersionControl.SUCCESS, "Ok");
-        }
-
         if (command instanceof CreateCommand)
             return processCreateCommand(command);
         else if (command instanceof CloneCommand){
@@ -154,32 +149,32 @@ public class Repo implements ICommandProcessor {
 
     private ICommandPacket sendToSocket( Pair<ICommandPacket, ServerSocket> packetAndSocket, byte[] bytes){
         ServerSocket serverSocket = packetAndSocket.getValue();
-        OutputStream os = null;
         Socket dataSocket = null;
         try {
             send(packetAndSocket.getKey());
         }
         catch (TransporterException e){
-            close(serverSocket);
             return new ResponsePacket(VersionControl.TRANSPORT_ERROR, "Cannot send port to connect to");
         }
+        OutputStream os = null;
         try {
             serverSocket.setSoTimeout(socketTimeOut);
             dataSocket = serverSocket.accept();
             os = dataSocket.getOutputStream();
-            os.write(bytes);
+            dataTransporter.setWriter(os);
+            dataTransporter.send(bytes);
             return new ResponsePacket(VersionControl.SUCCESS, "Ok");
         }
         catch (SocketTimeoutException e){
             return new ResponsePacket(VersionControl.CONNECTION_ERROR, "No connection was accepted");
         }
-        catch (IOException e){
+        catch (IOException | TransporterException e){
             return new ResponsePacket(VersionControl.CONNECTION_ERROR, "Unknown error occurred");
         }
         finally {
+            close(os);
             close(serverSocket);
             close(dataSocket);
-            close(os);
         }
     }
 
@@ -195,7 +190,7 @@ public class Repo implements ICommandProcessor {
 
         try {
             byte[] logBytes = dataProvider.read(versionControl.getRepoLogFile(currentRepoName));
-            return sendToSocket(packetAndSocket, encryptor.encrypt(Zipper.zipOne(logBytes, "")));
+            return sendToSocket(packetAndSocket, Zipper.zipOne(logBytes, ""));
         } catch (IOException e) {
             return new ResponsePacket(VersionControl.UNKNOWN_ERROR, "Unknown error occurred");
         }
@@ -267,7 +262,7 @@ public class Repo implements ICommandProcessor {
         }
         currentVersion = version;
         try {
-            byte[] bytesToSend = encryptor.encrypt(Zipper.zipMultiple(names, contents));
+            byte[] bytesToSend = Zipper.zipMultiple(names, contents);
             return sendToSocket(packetAndSocket, bytesToSend);
         } catch (IOException e) {
             return new ResponsePacket(VersionControl.UNKNOWN_ERROR, "Unknown error occurred");
@@ -318,7 +313,6 @@ public class Repo implements ICommandProcessor {
         ICommandPacket socketPacket = packetAndSocket.getKey();
         ServerSocket serverSocket = packetAndSocket.getValue();
         Socket dataSocket = null;
-        InputStream is = null;
         try {
             send(socketPacket);
         }
@@ -330,13 +324,14 @@ public class Repo implements ICommandProcessor {
                 return new ResponsePacket(VersionControl.TRANSPORT_ERROR, "Cannot send port to connect to");
             }
         }
+        InputStream is = null;
         try {
             serverSocket.setSoTimeout(socketTimeOut);
             dataSocket = serverSocket.accept();
-            close(serverSocket);
             is = dataSocket.getInputStream();
-            byte[] data = readFromStream(is);
-            List<Pair<String, byte[]>> files = Zipper.unzipMultiple(encryptor.decrypt(data));
+            dataTransporter.setReader(is);
+            byte[] data = dataTransporter.get();
+            List<Pair<String, byte[]>> files = Zipper.unzipMultiple(data);
             boolean success = writeToVersion(newVersion, files);
             ICommandPacket logPacket = null;
             if (success) {
@@ -367,14 +362,13 @@ public class Repo implements ICommandProcessor {
         catch (SocketTimeoutException e){
             return new ResponsePacket(VersionControl.CONNECTION_ERROR, "No connection was accepted");
         }
-        catch (IOException e){
-            e.printStackTrace();
+        catch (IOException | TransporterException e){
             return new ResponsePacket(VersionControl.CONNECTION_ERROR, "Unknown error occurred");
         }
         finally {
+            close(is);
             close(serverSocket);
             close(dataSocket);
-            close(is);
         }
     }
 
@@ -391,18 +385,6 @@ public class Repo implements ICommandProcessor {
             }
         }
         return true;
-    }
-
-    private byte[] readFromStream(InputStream inputStream) throws IOException{
-        byte[] bytes;
-        ByteArrayOutputStream tempStream = new ByteArrayOutputStream();
-        int count;
-        byte[] buffer = new byte[4096];
-        count = inputStream.read(buffer);
-        tempStream.write(buffer, 0, count);
-        bytes = tempStream.toByteArray();
-        tempStream.close();
-        return bytes;
     }
 
     private Pair<ICommandPacket, ServerSocket> createSocket(String type) throws IOException {

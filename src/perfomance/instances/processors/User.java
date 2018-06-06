@@ -12,8 +12,8 @@ import perfomance.instances.packets.*;
 import utils.Md5Hash;
 import utils.Zipper;
 import utils.data.IDataProvider;
+import utils.data.IDataTransporter;
 import utils.data.TransporterException;
-import utils.encrypt.IEncryptor;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -24,17 +24,17 @@ import java.util.*;
 public class User implements ICommandProcessor {
     private final Manager manager;
     private IDataProvider dataProvider;
+    private IDataTransporter dataTransporter;
     private byte[] tempBytesToSend;
     private boolean tempHard;
     private InetAddress address;
-    private IEncryptor encryptor;
     private final PrintStream printStream;
 
-    public User(Manager manager, IDataProvider dataProvider, InetAddress address, IEncryptor encryptor, PrintStream printStream) {
+    public User(Manager manager, IDataProvider dataProvider, IDataTransporter dataTransporter, InetAddress address, PrintStream printStream) {
         this.manager = manager;
         this.dataProvider = dataProvider;
+        this.dataTransporter = dataTransporter;
         this.address = address;
-        this.encryptor = encryptor;
         this.printStream = printStream;
     }
 
@@ -73,48 +73,37 @@ public class User implements ICommandProcessor {
     }
 
     private void operateWithSocket(Socket socket, String command){
-        InputStream inputStream = null;
-        OutputStream output = null;
-        ByteArrayOutputStream tempStream = null;
+        InputStream is = null;
+        OutputStream os = null;
         try {
+            is = socket.getInputStream();
+            os = socket.getOutputStream();
             if ("write".equals(command)) {
-                output = socket.getOutputStream();
+                dataTransporter.setWriter(os);
                 if (tempBytesToSend != null)
-                    output.write(encryptor.encrypt(tempBytesToSend));
+                    dataTransporter.send(tempBytesToSend);
                 tempBytesToSend = null;
                 printStream.println("Sending files...");
             } else if ("read".equals(command)) {
-                inputStream = socket.getInputStream();
-                tempStream = new ByteArrayOutputStream();
-                int count;
-                byte[] buffer = new byte[4096];
-                count = inputStream.read(buffer);
-                tempStream.write(buffer, 0, count);
-                byte[] bytes = tempStream.toByteArray();
-
+                dataTransporter.setReader(is);
+                byte[] dataBytes = dataTransporter.get();
                 printStream.println("Getting files");
-                writeBytes(bytes);
+                writeBytes(dataBytes);
             }
             else if ("notify".equals(command)){
-                inputStream = socket.getInputStream();
-                tempStream = new ByteArrayOutputStream();
-                int count;
-                byte[] buffer = new byte[4096];
-                count = inputStream.read(buffer);
-                tempStream.write(buffer, 0, count);
-                byte[] bytes = tempStream.toByteArray();
-
-                printStream.print(new String(Zipper.unzipOne(encryptor.decrypt(bytes)), "UTF-8"));
+                dataTransporter.setReader(is);
+                byte[] bytes = dataTransporter.get();
+                printStream.print(new String(Zipper.unzipOne(bytes), "UTF-8"));
             }
         }
-        catch (IOException e){
+        catch (TransporterException | IOException e){
             e.printStackTrace();
+            return;
         }
         finally {
-            close(inputStream);
-            close(output);
+            close(is);
+            close(os);
             close(socket);
-            close(tempStream);
             tempHard = false;
             tempBytesToSend = null;
         }
@@ -125,7 +114,7 @@ public class User implements ICommandProcessor {
             printStream.println("Saving files");
             if (tempHard)
                 dataProvider.clearDirectory(dataProvider.getOrigin());
-            List<Pair<String, byte[]>> files = Zipper.unzipMultiple(encryptor.decrypt(bytes));
+            List<Pair<String, byte[]>> files = Zipper.unzipMultiple(bytes);
             for (Pair<String, byte[]> pair: files){
                 dataProvider.write(pair.getKey(), pair.getValue());
             }
@@ -162,13 +151,10 @@ public class User implements ICommandProcessor {
 
     @Override
     public void sendPacket(String identifier) {
-        String[] command = identifier.split(" "); // TODO: check command for correctness
+        String[] command = identifier.split(" ");
         ICommandPacket packet = null;
         if (isValid(command)) {
-            if (identifier.startsWith("xor")) {
-                encryptor.setSecret(command[1]);
-                packet = sendEncryptPacket(command);
-            } else if (identifier.toLowerCase().startsWith("add")) {
+            if (identifier.toLowerCase().startsWith("add")) {
                 packet = sendAddPacket(command);
             } else if (identifier.toLowerCase().startsWith("clone")) {
                 packet = sendClonePacket(command);

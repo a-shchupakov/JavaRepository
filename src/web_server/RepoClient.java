@@ -27,10 +27,13 @@ public class RepoClient {
             OutputStream outputStream = socket.getOutputStream();
 
             CommandFactory factory = new CommandFactory();
-            IEncryptor encryptor = new XorEncryptor();
-            NetDataTransporter transporter = new NetDataTransporter(encryptor, inputStream, outputStream);
+            NetDataTransporter transporter = new NetDataTransporter(inputStream, outputStream);
             Manager manager = new Manager(new Serializer(), transporter, factory);
-            User user = new User(manager, new FolderProvider(), address, encryptor, System.out);
+            User user = new User(manager,
+                    new FolderProvider(),
+                    new NetDataTransporter(),
+                    address,
+                    System.out);
             manager.setCommandProcessor(user);
 
             BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in));

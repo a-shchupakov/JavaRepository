@@ -45,10 +45,10 @@ public class ThreadMonitor extends ThreadedTask {
     }
 
     private void writeActive(List<String> activeThreads){
-        System.out.println("Threads:");
-        for (String task: activeThreads) {
-            System.out.println("\t" + task);
-        }
+//        System.out.println("Threads:");
+//        for (String task: activeThreads) {
+//            System.out.println("\t" + task);
+//        }
         try {
             Files.write(fileToWrite, activeThreads, Charset.forName("UTF-8"));
         } catch (IOException e) {

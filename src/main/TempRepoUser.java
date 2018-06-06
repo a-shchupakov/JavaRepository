@@ -9,25 +9,38 @@ import utils.encrypt.IEncryptor;
 import utils.encrypt.XorEncryptor;
 import utils.serializers.Serializer;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("Duplicates")
-public class TempRepoUser {
+class TempRepoUser {
     List<String> commands = new ArrayList<>();
 
-    public TempRepoUser(String[] commands){
+    TempRepoUser(String[] commands){
         Collections.addAll(this.commands, commands);
     }
 
-    public void start(int port, InetAddress address){
+    public static void main(String[] args) {
+        try {
+            InetAddress ipAddress = InetAddress.getByName("127.0.0.1");
+            int port = 55557;
+
+            TempRepoUser autoClient = new TempRepoUser(new String[]{"add repo", "clone D:\\IT\\ООП\\практика\\Репозиторий\\tests\\local repo", "commit"});
+            new Thread(() -> autoClient.start(port, ipAddress)).start();
+
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    void start(int port, InetAddress address){
         Socket socket = null;
         try {
             socket = new Socket(address, port);
@@ -36,28 +49,27 @@ public class TempRepoUser {
             OutputStream outputStream = socket.getOutputStream();
 
             CommandFactory factory = new CommandFactory();
-            IEncryptor encryptor = new XorEncryptor();
-            NetDataTransporter transporter = new NetDataTransporter(encryptor, inputStream, outputStream);
+            NetDataTransporter transporter = new NetDataTransporter(inputStream, outputStream);
             Manager manager = new Manager(new Serializer(), transporter, factory);
-            User user = new User(manager, new FolderProvider(), address, encryptor, System.out);
+            User user = new User(manager, new FolderProvider(), new NetDataTransporter(), address, System.out);
             manager.setCommandProcessor(user);
 
             for (String command: commands) {
-                String message = command;
-                if (message.startsWith("commit")){
+                if (command.startsWith("commit")){
                     FolderProvider folderProvider = new FolderProvider();
                     folderProvider.setOrigin("D:\\IT\\ООП\\практика\\Репозиторий\\tests\\local\\repo");
                     folderProvider.write("1.txt", new byte[] {32, 54, 48, 39});
                     folderProvider.write("2.txt", "Im here now".getBytes());
                 }
-                if ("exit".equals(message.toLowerCase()))
+                if ("exit".equals(command.toLowerCase()))
                     break;
-                user.sendPacket(message);
+                user.sendPacket(command);
                 user.process(user.get());
             }
             System.out.println("Exiting");
         }
         catch (Exception e){
+            e.printStackTrace();
             return;
         }
         finally {

@@ -106,10 +106,13 @@ public class VersionControlServer extends WebServer {
                     os = m_socket.getOutputStream();
 
                     CommandFactory factory = new CommandFactory();
-                    IEncryptor encryptor = new XorEncryptor();
-                    NetDataTransporter transporter = new NetDataTransporter(encryptor, is, os);
+                    NetDataTransporter transporter = new NetDataTransporter(is, os);
                     Manager manager = new Manager(new Serializer(), transporter, factory);
-                    Repo repo = new Repo(m_socket.getLocalAddress().toString(), manager, versionControl, new FolderProvider(), new SimpleVersionIncrement(), encryptor);
+                    Repo repo = new Repo(m_socket.getLocalAddress().toString(),
+                            manager, versionControl,
+                            new FolderProvider(),
+                            new NetDataTransporter(),
+                            new SimpleVersionIncrement());
                     manager.setCommandProcessor(repo);
                     while (true){
                         ICommandPacket response = repo.process(repo.get());
