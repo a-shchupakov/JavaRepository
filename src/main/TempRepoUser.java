@@ -5,8 +5,6 @@ import perfomance.CommandFactory;
 import perfomance.instances.processors.User;
 import utils.data.FolderProvider;
 import utils.data.NetDataTransporter;
-import utils.encrypt.IEncryptor;
-import utils.encrypt.XorEncryptor;
 import utils.serializers.Serializer;
 
 import java.io.InputStream;
@@ -34,9 +32,7 @@ class TempRepoUser {
             TempRepoUser autoClient = new TempRepoUser(new String[]{"add repo", "clone D:\\IT\\ООП\\практика\\Репозиторий\\tests\\local repo", "commit"});
             new Thread(() -> autoClient.start(port, ipAddress)).start();
 
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+        } catch (UnknownHostException e) { }
 
     }
 
@@ -51,7 +47,7 @@ class TempRepoUser {
             CommandFactory factory = new CommandFactory();
             NetDataTransporter transporter = new NetDataTransporter(inputStream, outputStream);
             Manager manager = new Manager(new Serializer(), transporter, factory);
-            User user = new User(manager, new FolderProvider(), new NetDataTransporter(), address, System.out);
+            User user = new User(manager, new FolderProvider(), address, System.out);
             manager.setCommandProcessor(user);
 
             for (String command: commands) {
@@ -69,7 +65,6 @@ class TempRepoUser {
             System.out.println("Exiting");
         }
         catch (Exception e){
-            e.printStackTrace();
             return;
         }
         finally {

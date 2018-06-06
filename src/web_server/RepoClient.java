@@ -29,11 +29,7 @@ public class RepoClient {
             CommandFactory factory = new CommandFactory();
             NetDataTransporter transporter = new NetDataTransporter(inputStream, outputStream);
             Manager manager = new Manager(new Serializer(), transporter, factory);
-            User user = new User(manager,
-                    new FolderProvider(),
-                    new NetDataTransporter(),
-                    address,
-                    System.out);
+            User user = new User(manager, new FolderProvider(), address, System.out);
             manager.setCommandProcessor(user);
 
             BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in));

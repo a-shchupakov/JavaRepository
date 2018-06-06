@@ -9,23 +9,10 @@ public class NetDataTransporter implements IDataTransporter {
     private ByteArrayOutputStream tempStream;
     private int byteCount;
 
-    public NetDataTransporter(){
-        reader = null;
-        writer = null;
-    }
-
     public NetDataTransporter(InputStream inputStream, OutputStream outputStream){
         reader = inputStream;
         writer = outputStream;
         byteCount = 4096;
-    }
-
-    public void setReader(Object reader) {
-        this.reader = (InputStream) reader;
-    }
-
-    public void setWriter(Object writer) {
-        this.writer = (OutputStream) writer;
     }
 
     @Override
@@ -79,7 +66,6 @@ public class NetDataTransporter implements IDataTransporter {
         System.arraycopy(dataLength, 0, packet, 0, dataLength.length);
         System.arraycopy(bytes, 0, packet, dataLength.length, bytes.length);
         writer.write(packet);
-        writer.flush();
     }
 
     public void close(){
@@ -95,10 +81,7 @@ public class NetDataTransporter implements IDataTransporter {
             {
                 stream.close();
             }
-            catch(IOException ex)
-            {
-                ex.printStackTrace();
-            }
+            catch(IOException ex){ }
         }
     }
 }

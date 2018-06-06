@@ -31,7 +31,7 @@ public class Main {
             RepoClient manualClient = new RepoClient();
 
             //new Thread(() -> autoClient.start(port, ipAddress)).start();
-            new Thread(() -> autoClient.start(port, ipAddress)).start();
+            //new Thread(() -> autoClient.start(port, ipAddress)).start();
             //manualClient.start(port, ipAddress);
 
         } catch (Exception e) {

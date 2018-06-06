@@ -15,8 +15,8 @@ import utils.Zipper;
 import utils.IVersionIncrement;
 import utils.data.IDataProvider;
 import utils.data.IDataTransporter;
+import utils.data.NetDataTransporter;
 import utils.data.TransporterException;
-import utils.encrypt.IEncryptor;
 import web_server.VersionControl;
 
 import java.io.*;
@@ -42,11 +42,11 @@ public class Repo implements ICommandProcessor {
     private int socketTimeOut;
     private int socketPort;
 
-    public Repo(String usedIdentifier, Manager manager, VersionControl versionControl, IDataProvider dataProvider, IDataTransporter dataTransporter, IVersionIncrement versionIncrement){
+    public Repo(String usedIdentifier, Manager manager, VersionControl versionControl, IDataProvider dataProvider, IVersionIncrement versionIncrement){
         this.userIdentifier = usedIdentifier;
         this.versionControl = versionControl;
         this.dataProvider = dataProvider;
-        this.dataTransporter = dataTransporter;
+        this.dataTransporter = null;
         this.versionIncrement = versionIncrement;
         this.manager = manager;
         currentVersion = "";
@@ -156,12 +156,14 @@ public class Repo implements ICommandProcessor {
         catch (TransporterException e){
             return new ResponsePacket(VersionControl.TRANSPORT_ERROR, "Cannot send port to connect to");
         }
+        InputStream is = null;
         OutputStream os = null;
         try {
             serverSocket.setSoTimeout(socketTimeOut);
             dataSocket = serverSocket.accept();
+            is = dataSocket.getInputStream();
             os = dataSocket.getOutputStream();
-            dataTransporter.setWriter(os);
+            dataTransporter = new NetDataTransporter(is, os);
             dataTransporter.send(bytes);
             return new ResponsePacket(VersionControl.SUCCESS, "Ok");
         }
@@ -172,6 +174,7 @@ public class Repo implements ICommandProcessor {
             return new ResponsePacket(VersionControl.CONNECTION_ERROR, "Unknown error occurred");
         }
         finally {
+            close(is);
             close(os);
             close(serverSocket);
             close(dataSocket);
@@ -325,11 +328,14 @@ public class Repo implements ICommandProcessor {
             }
         }
         InputStream is = null;
+        OutputStream os = null;
         try {
             serverSocket.setSoTimeout(socketTimeOut);
             dataSocket = serverSocket.accept();
             is = dataSocket.getInputStream();
-            dataTransporter.setReader(is);
+            os = dataSocket.getOutputStream();
+            dataTransporter = new NetDataTransporter(is, os);
+            System.out.println("Getting data");
             byte[] data = dataTransporter.get();
             List<Pair<String, byte[]>> files = Zipper.unzipMultiple(data);
             boolean success = writeToVersion(newVersion, files);
@@ -367,6 +373,7 @@ public class Repo implements ICommandProcessor {
         }
         finally {
             close(is);
+            close(os);
             close(serverSocket);
             close(dataSocket);
         }
@@ -380,7 +387,6 @@ public class Repo implements ICommandProcessor {
             try {
                 dataProvider.write(nameAndData.getKey(), nameAndData.getValue());
             } catch (IOException e) {
-                e.printStackTrace();
                 return false;
             }
         }
@@ -416,8 +422,6 @@ public class Repo implements ICommandProcessor {
             if (closeable != null)
                 closeable.close();
         }
-        catch (IOException e){
-            e.printStackTrace();
-        }
+        catch (IOException e){ }
     }
 }

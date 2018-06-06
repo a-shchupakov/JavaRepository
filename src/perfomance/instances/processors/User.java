@@ -13,6 +13,7 @@ import utils.Md5Hash;
 import utils.Zipper;
 import utils.data.IDataProvider;
 import utils.data.IDataTransporter;
+import utils.data.NetDataTransporter;
 import utils.data.TransporterException;
 
 import java.io.*;
@@ -30,10 +31,10 @@ public class User implements ICommandProcessor {
     private InetAddress address;
     private final PrintStream printStream;
 
-    public User(Manager manager, IDataProvider dataProvider, IDataTransporter dataTransporter, InetAddress address, PrintStream printStream) {
+    public User(Manager manager, IDataProvider dataProvider, InetAddress address, PrintStream printStream) {
         this.manager = manager;
         this.dataProvider = dataProvider;
-        this.dataTransporter = dataTransporter;
+        this.dataTransporter = null;
         this.address = address;
         this.printStream = printStream;
     }
@@ -55,9 +56,7 @@ public class User implements ICommandProcessor {
             try {
                 ICommand responseCommand = get();
                 process(responseCommand);
-            } catch (TransporterException e) {
-                e.printStackTrace();
-            }
+            } catch (TransporterException e) { }
         }
 
         return null;
@@ -66,9 +65,7 @@ public class User implements ICommandProcessor {
     private Socket createSocket(int port){
         try {
             return new Socket(address, port);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (IOException e) { }
         return null;
     }
 
@@ -78,28 +75,24 @@ public class User implements ICommandProcessor {
         try {
             is = socket.getInputStream();
             os = socket.getOutputStream();
+            dataTransporter = new NetDataTransporter(is, os);
             if ("write".equals(command)) {
-                dataTransporter.setWriter(os);
+                System.out.println("Sending data");
                 if (tempBytesToSend != null)
                     dataTransporter.send(tempBytesToSend);
                 tempBytesToSend = null;
                 printStream.println("Sending files...");
             } else if ("read".equals(command)) {
-                dataTransporter.setReader(is);
                 byte[] dataBytes = dataTransporter.get();
                 printStream.println("Getting files");
                 writeBytes(dataBytes);
             }
             else if ("notify".equals(command)){
-                dataTransporter.setReader(is);
                 byte[] bytes = dataTransporter.get();
                 printStream.print(new String(Zipper.unzipOne(bytes), "UTF-8"));
             }
         }
-        catch (TransporterException | IOException e){
-            e.printStackTrace();
-            return;
-        }
+        catch (TransporterException | IOException e){ }
         finally {
             close(is);
             close(os);
@@ -118,9 +111,7 @@ public class User implements ICommandProcessor {
             for (Pair<String, byte[]> pair: files){
                 dataProvider.write(pair.getKey(), pair.getValue());
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (IOException e) { }
     }
 
     private boolean isValid(String[] command){
@@ -172,9 +163,7 @@ public class User implements ICommandProcessor {
             if (packet == null)
                 packet = EmptyPacket.INSTANCE;
             send(packet);
-        } catch (TransporterException e) {
-            e.printStackTrace();
-        }
+        } catch (TransporterException e) { }
     }
 
     private ICommandPacket sendAddPacket(String[] command){
@@ -210,7 +199,6 @@ public class User implements ICommandProcessor {
                 contents = ((Md5Command) respCommand).getMd5Bytes();
             }
         } catch (TransporterException e) {
-            e.printStackTrace();
             return null;
         }
         List<Pair<String, byte[]>> dirContents;
@@ -226,7 +214,6 @@ public class User implements ICommandProcessor {
         try {
             tempBytesToSend = Zipper.zipMultiple(filesToCommit.getKey(), filesToCommit.getValue());
         } catch (IOException e) {
-            e.printStackTrace();
             return null;
         }
         String[] dirContentsArray = new String[dirContents.size()];
@@ -305,8 +292,6 @@ public class User implements ICommandProcessor {
             if (closeable != null)
                 closeable.close();
         }
-        catch (IOException e){
-            e.printStackTrace();
-        }
+        catch (IOException e){ }
     }
 }
