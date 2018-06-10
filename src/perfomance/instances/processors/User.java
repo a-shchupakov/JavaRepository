@@ -20,6 +20,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class User implements ICommandProcessor {
@@ -207,10 +208,13 @@ public class User implements ICommandProcessor {
         } catch (IOException e) {
             return null;
         }
+        if (isSameVersions(names, contents, dirContents))
+            return null;
+
         Pair<String[], byte[][]> filesToCommit = getFilesToCommit(names, contents, dirContents);
 
         if (filesToCommit.getKey().length == 0 || filesToCommit.getValue().length == 0)
-            return null;
+            tempBytesToSend = new byte[0];
         try {
             tempBytesToSend = Zipper.zipMultiple(filesToCommit.getKey(), filesToCommit.getValue());
         } catch (IOException e) {
@@ -220,6 +224,20 @@ public class User implements ICommandProcessor {
         for (int i = 0; i < dirContents.size(); i++)
             dirContentsArray[i] = dirContents.get(i).getKey();
         return new CommitPacket(dirContentsArray);
+    }
+
+    private boolean isSameVersions(String[] oldNames, byte[][] oldContents, List<Pair<String, byte[]>> dirContents){
+        Map<String, byte[]> contentMap = dirContents.stream().collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+        if (oldContents.length != dirContents.size())
+            return false;
+        byte[] tempContent;
+        for (int i = 0; i < oldContents.length; i++){
+            tempContent = contentMap.get(oldNames[i]);
+            if (tempContent == null || !Arrays.equals(Md5Hash.getMd5Hash(tempContent), oldContents[i])){
+                return false;
+            }
+        }
+        return true;
     }
 
     private Pair<String[], byte[][]> getFilesToCommit(String[] md5Names, byte[][] md5Contents, List<Pair<String, byte[]>> dirContents){

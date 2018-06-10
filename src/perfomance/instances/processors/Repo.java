@@ -263,9 +263,9 @@ public class Repo implements ICommandProcessor {
             names[i] = pair.getKey();
             contents[i] = pair.getValue();
         }
-        currentVersion = version;
         try {
             byte[] bytesToSend = Zipper.zipMultiple(names, contents);
+            currentVersion = version;
             return sendToSocket(packetAndSocket, bytesToSend);
         } catch (IOException e) {
             return new ResponsePacket(VersionControl.UNKNOWN_ERROR, "Unknown error occurred");
@@ -280,7 +280,7 @@ public class Repo implements ICommandProcessor {
         Set<String> collecting = new HashSet<>();
         Collections.addAll(collecting, names);
         if (collecting.isEmpty())
-            return null;
+            return contents;
         String currentVersion = version;
         while (!(currentVersion == null) && !currentVersion.isEmpty()){
             List<Pair<String, byte[]>> folderContents = dataProvider.walkThrough(versionMapPaths.get(currentVersion));
@@ -382,6 +382,7 @@ public class Repo implements ICommandProcessor {
     private boolean writeToVersion(String version, List<Pair<String, byte[]>> files){
         String pathToVersion = dataProvider.resolve(dataProvider.getOrigin(), version);
         versionMapPaths.put(version, pathToVersion);
+        dataProvider.clearDirectory(pathToVersion);
         dataProvider.setCurrentRoot(pathToVersion);
         for (Pair<String, byte[]> nameAndData: files){
             try {
